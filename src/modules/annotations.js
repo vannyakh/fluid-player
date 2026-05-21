@@ -99,8 +99,19 @@ export default function annotationsModule(playerInstance) {
         });
     };
 
+    const syncAnnotationsLayerState = () => {
+        const wrapper = playerInstance.domRef.wrapper;
+
+        if (!wrapper) {
+            return;
+        }
+
+        wrapper.classList.toggle('fp_annotations_off', !isAnnotationsEnabled());
+    };
+
     const updateAnnotations = () => {
         ensureAnnotationItems();
+        syncAnnotationsLayerState();
 
         if (!itemElements.length) {
             return;
@@ -117,8 +128,20 @@ export default function annotationsModule(playerInstance) {
 
         itemElements.forEach(({ item, element }) => {
             const visible = isItemVisibleAtTime(item, currentTime);
+            const isActive = element.classList.contains('fp_annotation_active');
 
-            element.classList.toggle('fp_annotation_active', visible);
+            if (visible === isActive) {
+                return;
+            }
+
+            if (visible) {
+                element.classList.remove('fp_annotation_active');
+                requestAnimationFrame(() => {
+                    element.classList.add('fp_annotation_active');
+                });
+            } else {
+                element.classList.remove('fp_annotation_active');
+            }
         });
     };
 
@@ -136,7 +159,12 @@ export default function annotationsModule(playerInstance) {
         }
 
         ensureAnnotationItems();
+        syncAnnotationsLayerState();
         updateAnnotations();
+
+        if (typeof playerInstance.syncControlBarVisibilityState === 'function') {
+            playerInstance.syncControlBarVisibilityState(playerInstance.isControlBarVisible());
+        }
 
         const video = playerInstance.domRef.player;
 

@@ -1126,6 +1126,8 @@ const fluidPlayerClass = function () {
             controlsDisplay[i].classList.add('initial_controls_show');
         }
 
+        self.syncControlBarVisibilityState(true);
+
         if (self.isCurrentlyPlayingAd && self.displayOptions.vastOptions.showPlayButton) {
             self.domRef.wrapper.querySelector('.fluid_initial_play').style.display = "block";
             self.domRef.wrapper.querySelector('.fluid_initial_play_button_container').style.opacity = "1";
@@ -2974,7 +2976,23 @@ const fluidPlayerClass = function () {
 
         const controlBar = self.domRef.wrapper.querySelector('.fluid_controls_container');
         const style = window.getComputedStyle(controlBar, null);
+
+        if (style.display === 'none') {
+            return false;
+        }
+
         return !(style.opacity === 0 || style.visibility === 'hidden');
+    };
+
+    self.syncControlBarVisibilityState = (visible) => {
+        const wrapper = self.domRef.wrapper;
+
+        if (!wrapper) {
+            return;
+        }
+
+        wrapper.classList.toggle('fp_control_bar_visible', !!visible);
+        wrapper.classList.toggle('fp_control_bar_hidden', !visible);
     };
 
     self.setVideoPreload = () => {
@@ -3021,6 +3039,7 @@ const fluidPlayerClass = function () {
         }
 
         self.repositionSubtitlesContainer('12px');
+        self.syncControlBarVisibilityState(false);
     };
 
     self.showControlBar = (event) => {
@@ -3062,6 +3081,7 @@ const fluidPlayerClass = function () {
         }
 
         self.repositionSubtitlesContainer('46px');
+        self.syncControlBarVisibilityState(true);
     };
 
     self.linkControlBarUserActivity = () => {
@@ -3413,6 +3433,7 @@ const fluidPlayerClass = function () {
     self.toggleControlBar = (show) => {
         const controlBar = self.domRef.wrapper.querySelector('.fluid_controls_container');
         controlBar.classList.toggle('initial_controls_show', !!show);
+        self.syncControlBarVisibilityState(!!show);
     };
 
     self.on = (eventCall, callback) => {
