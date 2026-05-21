@@ -155,7 +155,10 @@ module.exports = (env, argv) => {
             rules: [
                 {
                     test: /\.m?js$/,
-                    exclude: /node_modules/,
+                    exclude: [
+                        /node_modules/,
+                        /vendor[\\/]gsap\.min\.js/,
+                    ],
                     use: {
                         loader: 'babel-loader',
                         options: {

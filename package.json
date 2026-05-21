@@ -37,6 +37,7 @@
   "dependencies": {
     "dashjs": "^4.5.2",
     "es6-promise": "^4.2.8",
+    "gsap": "^3.15.0",
     "hls.js": "^1.5.13",
     "panolens": "^0.12.1",
     "videojs-vtt.js": "^0.15.4"

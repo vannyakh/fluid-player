@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>VOD — Valerian (Settings menu)</title>
+    <title>VOD — Valerian (Feature test)</title>
     <%= htmlWebpackPlugin.tags.headTags %>
     <style>
         :root {
@@ -121,6 +121,82 @@
         /* Allow ambient mode blur to extend outside the player frame */
         .player-stage.fp-ambient-test-stage {
             overflow: visible;
+        }
+
+        /* Theatre: full page width (see also fluid_theatre_* classes from player) */
+        body.fluid_theatre_body_active .watch-page,
+        .watch-page.fluid_theatre_page_active {
+            max-width: 100% !important;
+            width: 100% !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+        }
+
+        body.fluid_theatre_body_active .watch-layout,
+        .watch-layout.fluid_theatre_layout_active {
+            grid-template-columns: 1fr !important;
+            width: 100% !important;
+            max-width: 100% !important;
+            gap: 0 !important;
+        }
+
+        body.fluid_theatre_body_active .watch-sidebar,
+        .watch-sidebar.fluid_theatre_sidebar_hidden {
+            display: none !important;
+        }
+
+        #player-stage.watch-theatre-active,
+        #player-stage.fluid_theatre_stage_active {
+            width: 100% !important;
+            max-width: 100% !important;
+            border-radius: 0;
+            aspect-ratio: 16 / 9;
+            height: auto !important;
+        }
+
+        #player-stage.watch-theatre-active #fluid_video_wrapper_fluid-player-e2e-case,
+        #player-stage.fluid_theatre_stage_active #fluid_video_wrapper_fluid-player-e2e-case {
+            position: absolute;
+            inset: 0;
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        body.fluid_theatre_body_active {
+            overflow-x: hidden;
+        }
+
+        @media (max-width: 768px) {
+            body.fluid_theatre_body_active .watch-page,
+            .watch-page.fluid_theatre_page_active {
+                padding-left: env(safe-area-inset-left, 0) !important;
+                padding-right: env(safe-area-inset-right, 0) !important;
+            }
+
+            #player-stage.watch-theatre-active,
+            #player-stage.fluid_theatre_stage_active {
+                max-width: 100vw !important;
+                margin-left: 0 !important;
+                margin-right: 0 !important;
+                max-height: min(56.25vw, 75dvh);
+            }
+        }
+
+        @media (max-width: 480px) {
+            #player-stage.watch-theatre-active,
+            #player-stage.fluid_theatre_stage_active {
+                max-height: min(56.25vw, 70dvh);
+                min-height: 180px;
+            }
+        }
+
+        @media (orientation: landscape) and (max-height: 520px) {
+            #player-stage.watch-theatre-active,
+            #player-stage.fluid_theatre_stage_active {
+                aspect-ratio: auto;
+                height: 100dvh !important;
+                max-height: 100dvh !important;
+            }
         }
 
         .player-stage > #fluid-player-e2e-case,
@@ -431,6 +507,11 @@
             .watch-sidebar {
                 order: 3;
             }
+
+            body.fluid_theatre_body_active .watch-sidebar,
+            .watch-sidebar.fluid_theatre_sidebar_hidden {
+                display: none !important;
+            }
         }
     </style>
 </head>
@@ -446,10 +527,10 @@
     <a class="platform-back" href="/">← Playground</a>
 </header>
 
-<div class="watch-page">
-    <div class="watch-layout">
+<div class="watch-page" id="watch-page" data-fluid-theatre-page>
+    <div class="watch-layout" id="watch-layout" data-fluid-theatre-layout>
         <section class="watch-primary">
-            <div class="player-stage fp-ambient-test-stage">
+            <div class="player-stage fp-ambient-test-stage" id="player-stage" data-fluid-theatre-stage>
                 <video id="fluid-player-e2e-case">
                     <source src="https://cdn.fluidplayer.com/videos/valerian-1080p.mkv" data-fluid-hd title="1080p" type="video/mp4"/>
                     <source src="https://cdn.fluidplayer.com/videos/valerian-720p.mkv" data-fluid-hd title="720p" type="video/mp4"/>
@@ -466,11 +547,12 @@
                 </div>
                 <div class="watch-info-real">
                     <h1>Valerian and the City of a Thousand Planets</h1>
-                    <p class="watch-meta">2017 · Sci-Fi · Settings menu · Ambient mode · Fluid CDN sample</p>
+                    <p class="watch-meta">2017 · Sci-Fi · Settings menu · Theatre · Annotations · Fluid CDN</p>
                     <p class="watch-desc">
-                        Manual test page for the YouTube-style settings menu: quality, playback speed, sleep timer,
-                        ambient mode (canvas blur), volume icon, and <code>localStorage</code> persistence.
-                        Open the gear control (bottom-right) to exercise each option.
+                        Manual test page for new player features: settings menu (quality, speed, sleep timer, ambient mode,
+                        annotations, stable volume / voice boost when CORS allows), sponsor overlays, theatre mode
+                        (full-width via <code>#player-stage</code>), and <code>localStorage</code> persistence.
+                        Use the gear, theatre button, or the test buttons below.
                     </p>
                 </div>
             </div>
@@ -479,23 +561,28 @@
                 <h2 id="feature-test-heading">New features — manual test</h2>
                 <p>Use the settings gear on the player, or the buttons below. Values refresh every second from stored settings.</p>
                 <div class="feature-test-actions">
-                    <button type="button" id="btn-open-settings">Open settings menu</button>
-                    <button type="button" id="btn-close-settings">Close settings menu</button>
+                    <button type="button" id="btn-open-settings">Open settings</button>
+                    <button type="button" id="btn-close-settings">Close settings</button>
+                    <button type="button" id="btn-toggle-theatre">Toggle theatre</button>
+                    <button type="button" id="btn-toggle-mini-player">Toggle mini player</button>
                 </div>
                 <ul class="feature-checklist">
-                    <li><span aria-hidden="true">☐</span> <strong>Quality</strong> — switch 1080p / 720p / 480p; HD badge hides on 480p</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Playback</strong> — play works with sound (no Web Audio until FX enabled)</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Quality</strong> — 1080p / 720p / 480p; HD badge hides on 480p</li>
                     <li><span aria-hidden="true">☐</span> <strong>Playback speed</strong> — slider + presets; persists after reload</li>
                     <li><span aria-hidden="true">☐</span> <strong>Sleep timer</strong> — 15–60 min; survives reload while active</li>
                     <li><span aria-hidden="true">☐</span> <strong>Ambient mode</strong> — blurred canvas glow behind video</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Annotations</strong> — sponsor badges 0:15–0:45 &amp; 1:30–2:00</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Audio FX</strong> — stable volume / voice boost (hidden if CORS blocks)</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Theatre mode</strong> — full page width; sidebar hidden; persists</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Mini player</strong> — global float, GSAP enter/exit, drag via control bar</li>
                     <li><span aria-hidden="true">☐</span> <strong>Volume icon</strong> — unified SVG with wave animation</li>
-                    <li><span aria-hidden="true">☐</span> <strong>Annotations</strong> — sponsor badges at 0:15–0:45 and 1:30–2:00; toggle in settings</li>
-                    <li><span aria-hidden="true">☐</span> <strong>Toggles</strong> — stable volume, voice boost (stored)</li>
                 </ul>
                 <ul class="feature-status" id="feature-status" aria-live="polite"></ul>
             </section>
         </section>
 
-        <aside class="watch-sidebar">
+        <aside class="watch-sidebar" id="watch-sidebar" data-fluid-theatre-sidebar>
             <h2>Up next</h2>
             <ul class="related-list related-skeleton" aria-hidden="true">
                 <li class="related-item">
@@ -555,10 +642,30 @@
     revealPlatform();
 
     var SETTINGS_STORAGE_KEY = 'fluidSettingsMenu_fluid-player-e2e-case';
+    var theatreState = { enabled: false, parentElement: 'player-stage' };
+    var miniPlayerState = { enabled: false, floating: true };
 
     var instance = fluidPlayer('fluid-player-e2e-case', {
         layoutControls: {
             playbackRateEnabled: true,
+            allowTheatre: true,
+            theatreMode: {
+                enabled: true,
+                expandPage: true,
+                width: '100%',
+                height: 'auto',
+                marginTop: 0,
+                horizontalAlign: 'center',
+                parentElement: 'player-stage',
+                pageElement: 'watch-page',
+                layoutElement: 'watch-layout',
+                sidebarElement: 'watch-sidebar',
+                classToApply: 'watch-theatre-active',
+                onStateChange: function (state) {
+                    theatreState = state;
+                    renderFeatureStatus();
+                }
+            },
             annotations: {
                 items: [
                     {
@@ -596,6 +703,19 @@
                 speed: true,
                 theatre: true,
                 settingsMenu: true
+            },
+            miniPlayer: {
+                enabled: true,
+                draggable: true,
+                floatToBody: true,
+                motion: true,
+                dragSnap: true,
+                position: 'bottom right',
+                placeholderText: 'Click to restore player',
+                onStateChange: function (state) {
+                    miniPlayerState = state;
+                    renderFeatureStatus();
+                }
             }
         }
     });
@@ -638,18 +758,46 @@
     function renderFeatureStatus() {
         var panel = document.getElementById('feature-status');
         var settings = readSettingsStore();
+        var internals = getPlayerInternals();
         var wrapper = document.getElementById('fluid_video_wrapper_fluid-player-e2e-case');
+        var stage = document.getElementById('player-stage');
         var video = document.getElementById('fluid-player-e2e-case');
         var ambientOn = wrapper && wrapper.classList.contains('fp_ambient_active');
+        var theatreOn = wrapper && wrapper.classList.contains('fluid_theatre_mode');
+        var stageTheatre = stage && stage.classList.contains('watch-theatre-active');
         var annotationVisible = wrapper && wrapper.querySelector('.fluid_annotation_item.fp_annotation_active');
+        var audioSupported = internals && typeof internals.isAudioProcessingSupported === 'function'
+            ? internals.isAudioProcessingSupported()
+            : null;
         var rate = video ? video.playbackRate : 1;
         var quality = localStorage.getItem('fluidQuality') || '—';
+        var playing = video && !video.paused && !video.ended;
 
         if (typeof settings.playbackSpeed === 'number') {
             rate = settings.playbackSpeed;
         }
 
+        if (internals && internals.theatreMode) {
+            theatreOn = true;
+        }
+
+        var miniOn = wrapper && wrapper.classList.contains('fluid_mini_player_mode');
+        var miniFloating = wrapper && wrapper.parentElement === document.body;
+
+        if (miniPlayerState.enabled) {
+            miniOn = true;
+        }
+
         panel.innerHTML =
+            '<li><strong>Playing</strong> ' + (playing ? '<span class="on">yes</span>' : '<span class="off">no</span>') + '</li>' +
+            '<li><strong>Theatre</strong> ' + (theatreOn || stageTheatre || theatreState.enabled
+                ? '<span class="on">on</span>' : '<span class="off">off</span>') + '</li>' +
+            '<li><strong>Mini player</strong> ' + (miniOn || miniPlayerState.enabled
+                ? '<span class="on">on</span>' : '<span class="off">off</span>') +
+            (miniFloating ? ' <span class="on">floating</span>' : '') + '</li>' +
+            '<li><strong>Audio FX menu</strong> ' + (audioSupported === null
+                ? '<span class="off">—</span>'
+                : (audioSupported ? '<span class="on">available</span>' : '<span class="off">hidden (CORS)</span>')) + '</li>' +
             '<li><strong>Ambient</strong> ' + (ambientOn ? '<span class="on">active</span>' : formatBool(settings.ambientMode)) + '</li>' +
             '<li><strong>Stable vol.</strong> ' + formatBool(settings.stableVolume) + '</li>' +
             '<li><strong>Voice boost</strong> ' + formatBool(settings.voiceBoost) + '</li>' +
@@ -694,8 +842,54 @@
         }
     }
 
+    function toggleMiniPlayerForTest() {
+        var internals = getPlayerInternals();
+
+        if (internals && typeof internals.toggleMiniPlayer === 'function') {
+            internals.toggleMiniPlayer();
+            return;
+        }
+
+        var miniButton = document.querySelector('.fluid_control_mini_player');
+        if (miniButton) {
+            miniButton.click();
+        }
+    }
+
+    function toggleTheatreForTest() {
+        var internals = getPlayerInternals();
+
+        if (internals && typeof internals.theatreToggle === 'function') {
+            internals.theatreToggle();
+            return;
+        }
+
+        var theatreButton = document.querySelector('.fluid_control_theatre');
+        if (theatreButton) {
+            theatreButton.click();
+        }
+    }
+
     document.getElementById('btn-open-settings').addEventListener('click', openSettingsMenuForTest);
     document.getElementById('btn-close-settings').addEventListener('click', closeSettingsMenuForTest);
+    document.getElementById('btn-toggle-theatre').addEventListener('click', toggleTheatreForTest);
+    document.getElementById('btn-toggle-mini-player').addEventListener('click', toggleMiniPlayerForTest);
+
+    var videoEl = document.getElementById('fluid-player-e2e-case');
+    if (videoEl) {
+        videoEl.addEventListener('theatreModeOn', function () {
+            theatreState.enabled = true;
+            renderFeatureStatus();
+        });
+        videoEl.addEventListener('theatreModeOff', function () {
+            theatreState.enabled = false;
+            renderFeatureStatus();
+        });
+        videoEl.addEventListener('miniPlayerToggle', function (event) {
+            miniPlayerState.enabled = !!(event.detail && event.detail.isToggledOn);
+            renderFeatureStatus();
+        });
+    }
 
     renderFeatureStatus();
     setInterval(renderFeatureStatus, 1000);
@@ -703,9 +897,6 @@
     document.addEventListener('click', function () {
         setTimeout(renderFeatureStatus, 0);
     });
-
-    /* Open settings menu automatically for manual feature testing */
-    setTimeout(openSettingsMenuForTest, minSkeletonMs + 400);
 </script>
 
 </body>

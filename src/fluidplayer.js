@@ -12,11 +12,12 @@ import AdSupportModule from './modules/adsupport';
 import StreamingModule from './modules/streaming';
 import UtilsModule from './modules/utils';
 import SuggestedVideosModule from './modules/suggestedVideos';
-import MiniPlayerModule from './modules/miniplayer';
+import MiniPlayerModule from './modules/miniplayermode';
 import SettingsMenuModule from './modules/settingsmenu';
 import AmbientModeModule from './modules/ambientmode';
 import AudioModeModule from './modules/audiomode';
 import AnnotationsModule from './modules/annotations';
+import TheatreModeModule from './modules/theatremode';
 
 const FP_MODULES = [
     VPAIDModule,
@@ -32,7 +33,8 @@ const FP_MODULES = [
     SettingsMenuModule,
     AmbientModeModule,
     AudioModeModule,
-    AnnotationsModule
+    AnnotationsModule,
+    TheatreModeModule
 ];
 
 // Determine build mode
@@ -201,15 +203,30 @@ const fluidPlayerClass = function () {
                 allowTheatre: true,
                 doubleclickFullscreen: true,
                 autoRotateFullScreen: false,
+                theatreMode: {
+                    enabled: true,
+                    expandPage: true,
+                    width: '100%',
+                    height: 'auto',
+                    marginTop: 0,
+                    horizontalAlign: 'center',
+                    parentElement: null,
+                    pageElement: null,
+                    layoutElement: null,
+                    sidebarElement: null,
+                    classToApply: null,
+                    onStateChange: null,
+                },
                 theatreSettings: {
                     width: '100%',
-                    height: '60%',
+                    height: 'auto',
                     marginTop: 0,
                     horizontalAlign: 'center',
                     keepPosition: false
                 },
                 theatreAdvanced: {
                     theatreElement: null,
+                    classToApply: null,
                 },
                 title: null,
                 logo: {
@@ -263,6 +280,9 @@ const fluidPlayerClass = function () {
                     placeholderText: 'Playing in Miniplayer',
                     position: 'bottom right',
                     autoToggle: false,
+                    motion: true,
+                    dragSnap: true,
+                    snapMargin: 12,
                 },
                 roundedCorners: 0,
                 annotations: {
@@ -2042,19 +2062,6 @@ const fluidPlayerClass = function () {
         //Set the fullscreen control
         self.trackEvent(self.domRef.player.parentNode, 'click', '.fluid_control_fullscreen', () => self.fullscreenToggle());
 
-        // Theatre mode
-        if (self.displayOptions.layoutControls.allowTheatre && !self.isInIframe) {
-            self.domRef.wrapper.querySelector('.fluid_control_theatre').style.display = 'inline-block';
-            self.trackEvent(self.domRef.player.parentNode, 'click', '.fluid_control_theatre', () => self.theatreToggle());
-        } else {
-            self.domRef.wrapper.querySelector('.fluid_control_theatre').style.display = 'none';
-        }
-
-        // Mini Player
-        if (self.displayOptions.layoutControls.miniPlayer.enabled && !self.isInIframe) {
-            self.trackEvent(self.domRef.player.parentNode, 'click', '.fluid_control_mini_player', () => self.toggleMiniPlayer(undefined, true));
-        }
-
         self.domRef.player.addEventListener('ratechange', () => {
             if (self.isCurrentlyPlayingAd) {
                 self.playbackRate = 1;
@@ -2229,6 +2236,10 @@ const fluidPlayerClass = function () {
         self.initHtmlOnPauseBlock();
 
         self.setCustomControls();
+
+        self.initTheatreMode?.();
+
+        self.initMiniPlayer?.();
 
         self.setupThumbnailPreview();
 
@@ -3220,103 +3231,6 @@ const fluidPlayerClass = function () {
         });
     };
 
-    self.theatreToggle = (toAnotherDisplayTarget = false) => {
-        self.debugMessage(`Toggling Theater Mode`);
-        if (self.isInIframe) {
-            return;
-        }
-
-        const previousDisplayMode = self.getPreviousDisplayMode();
-        this.resetDisplayMode(displayModes.THEATER);
-
-        // Advanced Theatre mode if specified
-        if (self.displayOptions.layoutControls.theatreAdvanced) {
-            const elementForTheatre = self.domRef.wrapper.querySelector(`#${self.displayOptions.layoutControls.theatreAdvanced.theatreElement}`);
-            const theatreClassToApply = self.displayOptions.layoutControls.theatreAdvanced.classToApply;
-            if (elementForTheatre != null && theatreClassToApply != null) {
-                if (!self.theatreMode) {
-                    elementForTheatre.classList.add(theatreClassToApply);
-                } else {
-                    elementForTheatre.classList.remove(theatreClassToApply);
-                }
-                self.theatreModeAdvanced = !self.theatreModeAdvanced;
-            } else {
-                console.log('[FP_ERROR] Theatre mode elements could not be found, defaulting behaviour.');
-                // Default overlay behaviour
-                self.defaultTheatre();
-            }
-        } else {
-            // Default overlay behaviour
-            self.defaultTheatre();
-        }
-
-        // Set correct variables
-        self.theatreMode = !self.theatreMode;
-        self.fluidStorage.fluidTheatre = self.theatreMode;
-
-        // Trigger theatre event
-        const theatreEvent = (self.theatreMode) ? 'theatreModeOn' : 'theatreModeOff';
-        self.domRef.player.dispatchEvent(new CustomEvent(theatreEvent, { bubbles: false, cancelable: true }));
-
-        if (!toAnotherDisplayTarget) {
-            self.trackPlayerSizeChanged(previousDisplayMode);
-        }
-
-        self.resizeVpaidAuto();
-    };
-
-    self.defaultTheatre = () => {
-        const videoWrapper = self.domRef.wrapper;
-
-        if (self.theatreMode) {
-            videoWrapper.classList.remove('fluid_theatre_mode');
-            videoWrapper.style.maxHeight = '';
-            videoWrapper.style.marginTop = '';
-            videoWrapper.style.left = '';
-            videoWrapper.style.right = '';
-            videoWrapper.style.position = '';
-            if (!self.displayOptions.layoutControls.fillToContainer) {
-                videoWrapper.style.width = self.originalWidth + 'px';
-                videoWrapper.style.height = self.originalHeight + 'px';
-            } else {
-                videoWrapper.style.width = '100%';
-                videoWrapper.style.height = '100%';
-            }
-            return;
-        }
-
-        videoWrapper.classList.add('fluid_theatre_mode');
-        const workingWidth = self.displayOptions.layoutControls.theatreSettings.width;
-        let defaultHorizontalMargin = '10px';
-        videoWrapper.style.width = workingWidth;
-        videoWrapper.style.height = self.displayOptions.layoutControls.theatreSettings.height;
-        videoWrapper.style.maxHeight = screen.height + "px";
-        videoWrapper.style.marginTop = self.displayOptions.layoutControls.theatreSettings.marginTop + 'px';
-        switch (self.displayOptions.layoutControls.theatreSettings.horizontalAlign) {
-            case 'center':
-                // We must calculate the margin differently based on whether they passed % or px
-                if (typeof (workingWidth) == 'string' && workingWidth.substr(workingWidth.length - 1) === "%") {
-                    // A margin of half the remaining space
-                    defaultHorizontalMargin = ((100 - parseInt(workingWidth.substring(0, workingWidth.length - 1))) / 2) + "%";
-                } else if (typeof (workingWidth) == 'string' && workingWidth.substr(workingWidth.length - 2) === "px") {
-                    // Half the (Remaining width / fullwidth)
-                    defaultHorizontalMargin = (((screen.width - parseInt(workingWidth.substring(0, workingWidth.length - 2))) / screen.width) * 100 / 2) + "%";
-                } else {
-                    console.log('[FP_ERROR] Theatre width specified invalid.');
-                }
-
-                videoWrapper.style.left = defaultHorizontalMargin;
-                break;
-            case 'right':
-                videoWrapper.style.right = defaultHorizontalMargin;
-                break;
-            case 'left':
-            default:
-                videoWrapper.style.left = defaultHorizontalMargin;
-                break;
-        }
-    };
-
     // Set the poster for the video, taken from custom params
     // Cannot use the standard video tag poster image as it can be removed by the persistent settings
     self.posterImage = () => {
@@ -3403,11 +3317,7 @@ const fluidPlayerClass = function () {
             self.setPlaybackSpeed(self.fluidStorage.fluidSpeed);
         }
 
-        if (typeof (self.fluidStorage.fluidTheatre) !== 'undefined'
-            && self.fluidStorage.fluidTheatre === 'true'
-            && self.displayOptions.layoutControls.persistentSettings.theatre) {
-            self.theatreToggle();
-        }
+        self.restoreTheatreFromStorage?.();
 
         self.applySettingsMenuStore?.();
     };

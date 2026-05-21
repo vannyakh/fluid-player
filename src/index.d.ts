@@ -82,6 +82,35 @@ declare interface LayoutControls {
     allowDownload: boolean;
     playbackRateEnabled: boolean;
     allowTheatre: boolean;
+    theatreMode?: Partial<{
+        enabled: boolean;
+        expandPage: boolean;
+        width: string;
+        height: string;
+        marginTop: number;
+        horizontalAlign: 'center' | 'left' | 'right';
+        parentElement: string | null;
+        parentId: string | null;
+        pageElement: string | null;
+        pageId: string | null;
+        layoutElement: string | null;
+        layoutId: string | null;
+        sidebarElement: string | null;
+        sidebarId: string | null;
+        classToApply: string | null;
+        onStateChange: (state: {
+            enabled: boolean;
+            parentElement: string | null;
+            layoutElement: string | null;
+            pageElement: string | null;
+        }) => void;
+        onTheatreModeChange: (state: {
+            enabled: boolean;
+            parentElement: string | null;
+            layoutElement: string | null;
+            pageElement: string | null;
+        }) => void;
+    }>;
     theatreAdvanced: Partial<{
         theatreElement: string;
         classToApply: string;
@@ -91,6 +120,7 @@ declare interface LayoutControls {
         height: string;
         marginTop: number;
         horizontalAlign: 'center' | 'left' | 'right';
+        keepPosition?: boolean;
     }>;
     playerInitCallback: () => void;
     persistentSettings: Partial<{
@@ -143,6 +173,23 @@ declare interface LayoutControls {
         placeholderText: string;
         position: 'top right' | 'top left' | 'bottom right' | 'bottom left';
         autoToggle: boolean;
+        draggable: boolean;
+        floatToBody: boolean;
+        motion: boolean;
+        dragSnap: boolean;
+        snapMargin: number;
+        mountElement: string | null;
+        mountId: string | null;
+        onStateChange: (state: {
+            enabled: boolean;
+            mountElement: string | null;
+            floating: boolean;
+        }) => void;
+        onMiniPlayerChange: (state: {
+            enabled: boolean;
+            mountElement: string | null;
+            floating: boolean;
+        }) => void;
     }>;
     showCardBoardView: boolean;
     showCardBoardJoystick: boolean;
