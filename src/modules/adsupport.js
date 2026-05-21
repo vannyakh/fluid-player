@@ -1756,7 +1756,7 @@ export default function (playerInstance, options) {
         btn.appendChild(skipLink);
 
         //removes the CSS class for a disabled button
-        btn.className = btn.className.replace(/\bskip_button_disabled\b/, '');
+        btn.classList.remove('skip_button_disabled');
 
         playerInstance.domRef.player.removeEventListener('timeupdate', playerInstance.decreaseSkipOffset);
     };

@@ -98,6 +98,7 @@ declare interface LayoutControls {
         quality: boolean;
         speed: boolean;
         theatre: boolean;
+        settingsMenu: boolean;
     }>;
     controlForwardBackward: Partial<{
         show: boolean;
@@ -109,6 +110,30 @@ declare interface LayoutControls {
             href: string;
             label: string;
         }>;
+    }>;
+    annotations?: Partial<{
+        enabled: boolean;
+        items: Array<{
+            start: number;
+            end?: number;
+            imageUrl: string;
+            linkUrl?: string;
+            linkTarget?: string;
+            alt?: string;
+            position?: 'topLeft' | 'topRight' | 'bottomLeft' | 'bottomRight' | 'center';
+            width?: number;
+            height?: number;
+        }>;
+    }>;
+    settingsMenu?: Partial<{
+        enabled: boolean;
+        stableVolume: boolean;
+        voiceBoost: boolean;
+        ambientMode: boolean;
+        annotations: boolean;
+        sleepTimer: boolean;
+        playbackSpeed: boolean;
+        quality: boolean;
     }>;
     miniPlayer: Partial<{
         enabled: boolean;

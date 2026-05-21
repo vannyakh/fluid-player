@@ -2,29 +2,710 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>VOD</title>
+    <title>VOD — Valerian (Settings menu)</title>
     <%= htmlWebpackPlugin.tags.headTags %>
-    <style lang="css">
-        #fluid-player-e2e-case {
-            width: 90%;
+    <style>
+        :root {
+            --bg: #0b0c10;
+            --surface: #14151c;
+            --surface-elevated: #1c1e28;
+            --border: #2a2d3a;
+            --text: #f0f1f5;
+            --text-muted: #9aa0b4;
+            --accent: #e50914;
+            --skeleton: #252833;
+            --skeleton-highlight: #323648;
+            --radius: 8px;
+            --nav-h: 52px;
+            --content-max: 1280px;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                var(--skeleton) 0%,
+                var(--skeleton-highlight) 45%,
+                var(--skeleton) 90%
+            );
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.4s ease-in-out infinite;
+            border-radius: var(--radius);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        .platform-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            height: var(--nav-h);
+            padding: 0 1.25rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .platform-logo {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .platform-nav-links {
+            display: flex;
+            gap: 1.25rem;
+            flex: 1;
+        }
+
+        .platform-nav-links .skeleton {
+            height: 14px;
+            width: 56px;
+        }
+
+        .platform-nav-links .skeleton:nth-child(2) { width: 72px; }
+        .platform-nav-links .skeleton:nth-child(3) { width: 48px; }
+
+        .platform-back {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .platform-back:hover {
+            color: var(--text);
+        }
+
+        .watch-page {
+            max-width: var(--content-max);
+            margin: 0 auto;
+            padding: 1.25rem 1.25rem 2.5rem;
+        }
+
+        .watch-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .player-stage {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        /* Allow ambient mode blur to extend outside the player frame */
+        .player-stage.fp-ambient-test-stage {
+            overflow: visible;
+        }
+
+        .player-stage > #fluid-player-e2e-case,
+        .player-stage #fluid_video_wrapper_fluid-player-e2e-case {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            max-height: none;
+        }
+
+        .player-stage #fluid_video_wrapper_fluid-player-e2e-case video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .watch-info {
+            margin-top: 1rem;
+        }
+
+        .skeleton-title-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: opacity 0.35s ease;
+        }
+
+        .skeleton-title-block .skeleton:first-child {
+            height: 22px;
+            width: 72%;
+            max-width: 420px;
+        }
+
+        .skeleton-title-block .skeleton:nth-child(2) {
+            height: 14px;
+            width: 40%;
+            max-width: 200px;
+        }
+
+        .skeleton-title-block .skeleton:nth-child(3) {
+            height: 12px;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .skeleton-title-block .skeleton:nth-child(4) {
+            height: 12px;
+            width: 88%;
+        }
+
+        .watch-info-real {
+            transition: opacity 0.35s ease;
+        }
+
+        .watch-info-real h1 {
+            margin: 0 0 0.35rem;
+            font-size: 1.375rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .watch-info-real .watch-meta {
+            margin: 0 0 0.75rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .watch-info-real .watch-desc {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            max-width: 52rem;
+        }
+
+        .feature-test-panel {
+            margin-top: 1rem;
+            padding: 1rem 1.125rem;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .feature-test-panel h2 {
+            margin: 0 0 0.5rem;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .feature-test-panel > p {
+            margin: 0 0 0.75rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .feature-checklist {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 0.5rem 1rem;
+            margin: 0 0 1rem;
+            padding: 0;
+            list-style: none;
+            font-size: 0.8125rem;
+        }
+
+        .feature-checklist li {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.4rem;
+        }
+
+        .feature-checklist code {
+            font-size: 0.75rem;
+            color: #c9d1ff;
+        }
+
+        .feature-status {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 0.5rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            font-size: 0.75rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        .feature-status li {
+            padding: 0.45rem 0.55rem;
+            background: var(--surface-elevated);
+            border-radius: 6px;
+            border: 1px solid var(--border);
+        }
+
+        .feature-status strong {
+            display: block;
+            margin-bottom: 0.15rem;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            color: var(--text-muted);
+            font-family: inherit;
+        }
+
+        .feature-status .on {
+            color: #7ee787;
+        }
+
+        .feature-status .off {
+            color: #9aa0b4;
+        }
+
+        .feature-test-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-test-actions button {
+            padding: 0.45rem 0.85rem;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            background: var(--surface-elevated);
+            color: var(--text);
+            font-size: 0.8125rem;
+            cursor: pointer;
+        }
+
+        .feature-test-actions button:hover {
+            background: #2a2f42;
+            border-color: #3d4458;
+        }
+
+        .watch-sidebar h2 {
+            margin: 0 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .related-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .related-item {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 0.625rem;
+            align-items: start;
+        }
+
+        .related-item .skeleton-thumb {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+        }
+
+        .related-item .skeleton-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            padding-top: 0.25rem;
+        }
+
+        .related-item .skeleton-lines .skeleton:first-child {
+            height: 12px;
+            width: 100%;
+        }
+
+        .related-item .skeleton-lines .skeleton:last-child {
+            height: 10px;
+            width: 55%;
+        }
+
+        .related-real {
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .related-real a {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 0.625rem;
+            text-decoration: none;
+            color: inherit;
+            border-radius: var(--radius);
+            transition: background 0.12s;
+        }
+
+        .related-real a:hover {
+            background: var(--surface-elevated);
+        }
+
+        .related-real img {
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            object-fit: cover;
+            border-radius: 4px;
+            background: var(--surface);
+        }
+
+        .related-real span {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            line-height: 1.35;
+        }
+
+        .related-real small {
+            display: block;
+            margin-top: 0.2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        body:not(.platform-ready) .watch-info-real,
+        body:not(.platform-ready) .related-real {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        body.platform-ready .skeleton-title-block,
+        body.platform-ready .related-skeleton {
+            display: none;
+        }
+
+        body.platform-ready .watch-info-real {
+            position: static;
+            width: auto;
+            height: auto;
+            margin: 0;
+            overflow: visible;
+            clip: auto;
+            white-space: normal;
+        }
+
+        body.platform-ready .related-real {
+            display: flex;
+        }
+
+        @media (max-width: 960px) {
+            .watch-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .watch-sidebar {
+                order: 3;
+            }
         }
     </style>
 </head>
 <body>
 
-<video id="fluid-player-e2e-case">
-    <source src="https://cdn.fluidplayer.com/videos/valerian-1080p.mkv" data-fluid-hd title="1080p" type="video/mp4"/>
-    <source src="https://cdn.fluidplayer.com/videos/valerian-720p.mkv" data-fluid-hd title="720p" type="video/mp4"/>
-    <source src="https://cdn.fluidplayer.com/videos/valerian-480p.mkv" title="480p" type="video/mp4"/>
-</video>
+<header class="platform-nav">
+    <a class="platform-logo" href="/">StreamPlay</a>
+    <nav class="platform-nav-links" aria-hidden="true">
+        <span class="skeleton"></span>
+        <span class="skeleton"></span>
+        <span class="skeleton"></span>
+    </nav>
+    <a class="platform-back" href="/">← Playground</a>
+</header>
+
+<div class="watch-page">
+    <div class="watch-layout">
+        <section class="watch-primary">
+            <div class="player-stage fp-ambient-test-stage">
+                <video id="fluid-player-e2e-case">
+                    <source src="https://cdn.fluidplayer.com/videos/valerian-1080p.mkv" data-fluid-hd title="1080p" type="video/mp4"/>
+                    <source src="https://cdn.fluidplayer.com/videos/valerian-720p.mkv" data-fluid-hd title="720p" type="video/mp4"/>
+                    <source src="https://cdn.fluidplayer.com/videos/valerian-480p.mkv" title="480p" type="video/mp4"/>
+                </video>
+            </div>
+
+            <div class="watch-info">
+                <div class="skeleton-title-block" aria-hidden="true">
+                    <span class="skeleton"></span>
+                    <span class="skeleton"></span>
+                    <span class="skeleton"></span>
+                    <span class="skeleton"></span>
+                </div>
+                <div class="watch-info-real">
+                    <h1>Valerian and the City of a Thousand Planets</h1>
+                    <p class="watch-meta">2017 · Sci-Fi · Settings menu · Ambient mode · Fluid CDN sample</p>
+                    <p class="watch-desc">
+                        Manual test page for the YouTube-style settings menu: quality, playback speed, sleep timer,
+                        ambient mode (canvas blur), volume icon, and <code>localStorage</code> persistence.
+                        Open the gear control (bottom-right) to exercise each option.
+                    </p>
+                </div>
+            </div>
+
+            <section class="feature-test-panel" aria-labelledby="feature-test-heading">
+                <h2 id="feature-test-heading">New features — manual test</h2>
+                <p>Use the settings gear on the player, or the buttons below. Values refresh every second from stored settings.</p>
+                <div class="feature-test-actions">
+                    <button type="button" id="btn-open-settings">Open settings menu</button>
+                    <button type="button" id="btn-close-settings">Close settings menu</button>
+                </div>
+                <ul class="feature-checklist">
+                    <li><span aria-hidden="true">☐</span> <strong>Quality</strong> — switch 1080p / 720p / 480p; HD badge hides on 480p</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Playback speed</strong> — slider + presets; persists after reload</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Sleep timer</strong> — 15–60 min; survives reload while active</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Ambient mode</strong> — blurred canvas glow behind video</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Volume icon</strong> — unified SVG with wave animation</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Annotations</strong> — sponsor badges at 0:15–0:45 and 1:30–2:00; toggle in settings</li>
+                    <li><span aria-hidden="true">☐</span> <strong>Toggles</strong> — stable volume, voice boost (stored)</li>
+                </ul>
+                <ul class="feature-status" id="feature-status" aria-live="polite"></ul>
+            </section>
+        </section>
+
+        <aside class="watch-sidebar">
+            <h2>Up next</h2>
+            <ul class="related-list related-skeleton" aria-hidden="true">
+                <li class="related-item">
+                    <span class="skeleton skeleton-thumb"></span>
+                    <span class="skeleton-lines">
+                        <span class="skeleton"></span>
+                        <span class="skeleton"></span>
+                    </span>
+                </li>
+                <li class="related-item">
+                    <span class="skeleton skeleton-thumb"></span>
+                    <span class="skeleton-lines">
+                        <span class="skeleton"></span>
+                        <span class="skeleton"></span>
+                    </span>
+                </li>
+                <li class="related-item">
+                    <span class="skeleton skeleton-thumb"></span>
+                    <span class="skeleton-lines">
+                        <span class="skeleton"></span>
+                        <span class="skeleton"></span>
+                    </span>
+                </li>
+            </ul>
+            <div class="related-real">
+                <a href="/">
+                    <img src="https://cdn.fluidplayer.com/images/sample-thumbnail.jpg" alt="" width="120" height="68" loading="lazy" onerror="this.style.visibility='hidden'">
+                    <span>More test cases<small>Back to playground index</small></span>
+                </a>
+                <a href="vod_basic_vr.html">
+                    <img src="" alt="" width="120" height="68" loading="lazy" hidden>
+                    <span>VR mode sample<small>vod_basic_vr.html</small></span>
+                </a>
+                <a href="hls_vod.html">
+                    <img src="" alt="" width="120" height="68" loading="lazy" hidden>
+                    <span>HLS VOD<small>hls_vod.html</small></span>
+                </a>
+            </div>
+        </aside>
+    </div>
+</div>
 
 <%= htmlWebpackPlugin.tags.bodyTags %>
 
 <script>
-    var instance = fluidPlayer('fluid-player-e2e-case');
+    var skeletonShownAt = Date.now();
+    var minSkeletonMs = 700;
+
+    function revealPlatform() {
+        var elapsed = Date.now() - skeletonShownAt;
+        var delay = Math.max(0, minSkeletonMs - elapsed);
+        setTimeout(function () {
+            document.body.classList.add('platform-ready');
+        }, delay);
+    }
+
+    revealPlatform();
+
+    var SETTINGS_STORAGE_KEY = 'fluidSettingsMenu_fluid-player-e2e-case';
+
+    var instance = fluidPlayer('fluid-player-e2e-case', {
+        layoutControls: {
+            playbackRateEnabled: true,
+            annotations: {
+                items: [
+                    {
+                        start: 15,
+                        end: 45,
+                        imageUrl: 'static/annotation-badge.svg',
+                        linkUrl: 'https://www.fluidplayer.com/',
+                        alt: 'Sponsor — bottom right',
+                        position: 'bottomRight',
+                        width: 140
+                    },
+                    {
+                        start: 90,
+                        end: 120,
+                        imageUrl: 'static/annotation-badge.svg',
+                        alt: 'Sponsor — top left',
+                        position: 'topLeft',
+                        width: 120
+                    }
+                ]
+            },
+            settingsMenu: {
+                enabled: true,
+                stableVolume: true,
+                voiceBoost: true,
+                ambientMode: true,
+                annotations: true,
+                sleepTimer: true,
+                playbackSpeed: true,
+                quality: true
+            },
+            persistentSettings: {
+                volume: true,
+                quality: true,
+                speed: true,
+                theatre: true,
+                settingsMenu: true
+            }
+        }
+    });
+
+    function getPlayerInternals() {
+        if (!window.fluidPlayerDebug || !window.fluidPlayerDebug.length) {
+            return null;
+        }
+
+        return window.fluidPlayerDebug[window.fluidPlayerDebug.length - 1].internals;
+    }
+
+    function readSettingsStore() {
+        var internals = getPlayerInternals();
+
+        if (internals && typeof internals.getSettingsMenuStore === 'function') {
+            return internals.getSettingsMenuStore();
+        }
+
+        try {
+            return JSON.parse(localStorage.getItem(SETTINGS_STORAGE_KEY) || '{}');
+        } catch (error) {
+            return {};
+        }
+    }
+
+    function formatBool(value) {
+        return value ? '<span class="on">on</span>' : '<span class="off">off</span>';
+    }
+
+    function formatSleepTimer(settings) {
+        if (!settings.sleepTimerEndsAt || settings.sleepTimerEndsAt <= Date.now()) {
+            return '<span class="off">off</span>';
+        }
+
+        var remainingMin = Math.max(1, Math.ceil((settings.sleepTimerEndsAt - Date.now()) / 60000));
+        return '<span class="on">' + remainingMin + ' min left</span>';
+    }
+
+    function renderFeatureStatus() {
+        var panel = document.getElementById('feature-status');
+        var settings = readSettingsStore();
+        var wrapper = document.getElementById('fluid_video_wrapper_fluid-player-e2e-case');
+        var video = document.getElementById('fluid-player-e2e-case');
+        var ambientOn = wrapper && wrapper.classList.contains('fp_ambient_active');
+        var annotationVisible = wrapper && wrapper.querySelector('.fluid_annotation_item.fp_annotation_active');
+        var rate = video ? video.playbackRate : 1;
+        var quality = localStorage.getItem('fluidQuality') || '—';
+
+        if (typeof settings.playbackSpeed === 'number') {
+            rate = settings.playbackSpeed;
+        }
+
+        panel.innerHTML =
+            '<li><strong>Ambient</strong> ' + (ambientOn ? '<span class="on">active</span>' : formatBool(settings.ambientMode)) + '</li>' +
+            '<li><strong>Stable vol.</strong> ' + formatBool(settings.stableVolume) + '</li>' +
+            '<li><strong>Voice boost</strong> ' + formatBool(settings.voiceBoost) + '</li>' +
+            '<li><strong>Annotations</strong> ' + formatBool(settings.annotations) +
+            (annotationVisible ? ' <span class="on">overlay visible</span>' : '') + '</li>' +
+            '<li><strong>Sleep timer</strong> ' + formatSleepTimer(settings) + '</li>' +
+            '<li><strong>Speed</strong> <span class="on">' + Number(rate).toFixed(2) + 'x</span></li>' +
+            '<li><strong>Quality</strong> <span class="on">' + quality + '</span></li>' +
+            '<li><strong>Store key</strong> <span class="on">' + SETTINGS_STORAGE_KEY + '</span></li>';
+    }
+
+    function openSettingsMenuForTest() {
+        var internals = getPlayerInternals();
+
+        if (internals && typeof internals.openSettingsMenu === 'function') {
+            internals.openSettingsMenu();
+            return true;
+        }
+
+        var gear = document.querySelector('.fluid_control_video_source');
+
+        if (gear) {
+            gear.click();
+            return true;
+        }
+
+        return false;
+    }
+
+    function closeSettingsMenuForTest() {
+        var internals = getPlayerInternals();
+
+        if (internals && typeof internals.closeSettingsMenu === 'function') {
+            internals.closeSettingsMenu();
+            return;
+        }
+
+        var gear = document.querySelector('.fluid_control_video_source');
+
+        if (gear) {
+            gear.click();
+        }
+    }
+
+    document.getElementById('btn-open-settings').addEventListener('click', openSettingsMenuForTest);
+    document.getElementById('btn-close-settings').addEventListener('click', closeSettingsMenuForTest);
+
+    renderFeatureStatus();
+    setInterval(renderFeatureStatus, 1000);
+
+    document.addEventListener('click', function () {
+        setTimeout(renderFeatureStatus, 0);
+    });
+
+    /* Open settings menu automatically for manual feature testing */
+    setTimeout(openSettingsMenuForTest, minSkeletonMs + 400);
 </script>
 
 </body>

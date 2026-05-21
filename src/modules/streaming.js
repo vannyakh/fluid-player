@@ -161,6 +161,10 @@ export default function (playerInstance, options) {
                 const sourceChangeList = createSourceChangeList(sortedLevels);
                 attachSourceChangeList(sourceChangeButton, sourceChangeList);
 
+                if (typeof playerInstance.updateVideoSourceBadge === 'function') {
+                    playerInstance.updateVideoSourceBadge();
+                }
+
                 // Set initial level based on persisted quality or default to auto
                 setInitialLevel(sortedLevels);
             } catch (err) {
@@ -174,7 +178,7 @@ export default function (playerInstance, options) {
             .map((level, index) => ({
                 id: index,
                 title: level.height + 'p',
-                isHD: level.videoRange === 'HDR',
+                isHD: level.height >= 720 || level.videoRange === 'HDR',
                 bitrate: level.bitrate
             }));
 
@@ -211,11 +215,11 @@ export default function (playerInstance, options) {
 
     function createSourceChangeItem(level) {
         const sourceSelectedClass = getSourceSelectedClass(level);
-        const hdIndicator = level.isHD ? `<sup style="color:${playerInstance.displayOptions.layoutControls.primaryColor}" class="fp_hd_source"></sup>` : '';
-
         const sourceChangeDiv = document.createElement('div');
         sourceChangeDiv.className = `fluid_video_source_list_item js-source_${level.title}`;
-        sourceChangeDiv.innerHTML = `<span class="source_button_icon ${sourceSelectedClass}"></span>${level.title}${hdIndicator}`;
+        sourceChangeDiv.innerHTML = typeof playerInstance.buildQualitySourceItemHtml === 'function'
+            ? playerInstance.buildQualitySourceItemHtml(level.title, level.isHD, sourceSelectedClass)
+            : `<span class="source_button_icon ${sourceSelectedClass}"></span>${level.title}`;
 
         sourceChangeDiv.addEventListener('click', event => onSourceChangeClick(event, level));
 
@@ -258,6 +262,10 @@ export default function (playerInstance, options) {
         });
 
         playerInstance.openCloseVideoSourceSwitch();
+
+        if (typeof playerInstance.updateVideoSourceBadge === 'function') {
+            playerInstance.updateVideoSourceBadge();
+        }
     }
 
     function clearSourceSelectedIcons() {
@@ -266,9 +274,19 @@ export default function (playerInstance, options) {
     }
 
     function attachSourceChangeList(sourceChangeButton, sourceChangeList) {
-        sourceChangeButton.appendChild(sourceChangeList);
-        sourceChangeButton.removeEventListener('click', playerInstance.openCloseVideoSourceSwitch);
-        sourceChangeButton.addEventListener('click', playerInstance.openCloseVideoSourceSwitch);
+        const host = typeof playerInstance.getSettingsQualityHost === 'function'
+            ? playerInstance.getSettingsQualityHost()
+            : sourceChangeButton;
+        const settingsMenuEnabled = playerInstance.displayOptions.layoutControls.settingsMenu?.enabled !== false;
+
+        host.appendChild(sourceChangeList);
+
+        if (!settingsMenuEnabled) {
+            sourceChangeButton.removeEventListener('click', playerInstance.openCloseVideoSourceSwitch);
+            sourceChangeButton.addEventListener('click', playerInstance.openCloseVideoSourceSwitch);
+        } else if (typeof playerInstance.bindSettingsButtonClick === 'function') {
+            playerInstance.bindSettingsButtonClick();
+        }
     }
 
     function setInitialLevel(levels) {
@@ -281,6 +299,10 @@ export default function (playerInstance, options) {
             // Default to 'auto' if no persisted level is found
             const autoLevel = levels.find(level => level.title === 'auto');
             playerInstance.hlsPlayer.currentLevel = autoLevel.id;
+        }
+
+        if (typeof playerInstance.updateVideoSourceBadge === 'function') {
+            playerInstance.updateVideoSourceBadge();
         }
     }
 

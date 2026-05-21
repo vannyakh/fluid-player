@@ -523,11 +523,11 @@ export default function (playerInstance, options) {
             //The browser does not support the Fullscreen API, so a pseudo-fullscreen implementation is used
             const fullscreenTag = playerInstance.domRef.wrapper;
 
-            if (fullscreenTag.className.search(/\bpseudo_fullscreen\b/g) !== -1) {
-                fullscreenTag.className += ' pseudo_fullscreen';
+            if (fullscreenTag.classList.contains('pseudo_fullscreen')) {
+                fullscreenTag.classList.add('pseudo_fullscreen');
                 playerInstance.fullscreenOn(fullscreenButton, menuOptionFullscreen);
             } else {
-                fullscreenTag.className = fullscreenTag.className.replace(/\bpseudo_fullscreen\b/g, '');
+                fullscreenTag.classList.remove('pseudo_fullscreen');
                 playerInstance.fullscreenOff(fullscreenButton, menuOptionFullscreen);
             }
         }

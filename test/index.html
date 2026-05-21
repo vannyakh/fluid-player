@@ -2,56 +2,451 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Fluid Player E2E test case index listing</title>
-    <style lang="css">
-        body, html {
+    <title>Fluid Player Playground</title>
+    <style>
+        :root {
+            --bg: #0f1117;
+            --surface: #1a1d27;
+            --surface-hover: #232735;
+            --border: #2d3348;
+            --text: #e8eaef;
+            --text-muted: #8b92a8;
+            --accent: #3b82f6;
+            --accent-soft: rgba(59, 130, 246, 0.15);
+            --radius: 10px;
+            --header-h: 64px;
+            --sidebar-w: 220px;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            height: 100%;
+        }
+
+        body {
             margin: 0;
             padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'segoe ui', roboto, oxygen-sans, ubuntu, cantarell, 'helvetica neue', 'arial', sans-serif, 'apple color emoji', 'segoe ui emoji', 'segoe ui symbol';
-            font-size: 1rem;
+            min-height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--bg);
         }
 
-        #e2e-listing {
-            max-width: 60%;
-            padding: 2.2rem;
-            margin: auto;
+        .playground-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            height: var(--header-h);
+            padding: 0 1.5rem;
+            background: rgba(15, 17, 23, 0.92);
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(8px);
         }
 
-        #e2e-title h1 {
-            font-size: 1.5rem;
+        .playground-brand {
+            display: flex;
+            align-items: baseline;
+            gap: 0.75rem;
+            min-width: 0;
         }
 
-        #e2e-items ul li:not(:last-child) {
-            padding-bottom: 4px;
+        .playground-brand h1 {
+            margin: 0;
+            font-size: 1.125rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+            white-space: nowrap;
         }
 
-        #e2e-note-restart {
+        .playground-brand span {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .playground-search {
+            flex: 1;
+            max-width: 360px;
+        }
+
+        .playground-search input {
+            width: 100%;
+            padding: 0.5rem 0.875rem;
             font-size: 0.875rem;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        .playground-search input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .playground-search input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-soft);
+        }
+
+        .playground-layout {
+            min-height: calc(100vh - var(--header-h));
+        }
+
+        .playground-sidebar {
+            position: fixed;
+            top: var(--header-h);
+            left: 0;
+            z-index: 5;
+            width: var(--sidebar-w);
+            height: calc(100vh - var(--header-h));
+            padding: 1.25rem 0;
+            background: var(--bg);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            overscroll-behavior: contain;
+        }
+
+        .playground-sidebar nav {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 0 0.75rem;
+        }
+
+        .playground-sidebar button {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8125rem;
+            font-family: inherit;
+            color: var(--text-muted);
+            text-align: left;
+            background: transparent;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.12s, color 0.12s;
+        }
+
+        .playground-sidebar button:hover {
+            color: var(--text);
+            background: var(--surface-hover);
+        }
+
+        .playground-sidebar button.active {
+            color: var(--text);
+            background: var(--accent-soft);
+        }
+
+        .playground-sidebar button .count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .playground-sidebar button.active .count {
+            color: var(--accent);
+        }
+
+        .playground-main {
+            margin-left: var(--sidebar-w);
+            min-height: calc(100vh - var(--header-h));
+            padding: 1.5rem;
+        }
+
+        .playground-note {
+            margin: 0 0 1.25rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+        }
+
+        .playground-note strong {
+            color: var(--text);
+            font-weight: 500;
+        }
+
+        .playground-empty {
+            display: none;
+            padding: 3rem 1rem;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9375rem;
+        }
+
+        .playground-empty.visible {
+            display: block;
+        }
+
+        .case-section {
+            margin-bottom: 2rem;
+        }
+
+        .case-section:last-child {
+            margin-bottom: 0;
+        }
+
+        .case-section[hidden] {
+            display: none;
+        }
+
+        .case-section h2 {
+            margin: 0 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .case-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 0.625rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .case-card {
+            display: block;
+            padding: 0.875rem 1rem;
+            text-decoration: none;
+            color: var(--text);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            transition: border-color 0.15s, background 0.15s, transform 0.12s;
+        }
+
+        .case-card:hover {
+            background: var(--surface-hover);
+            border-color: var(--accent);
+        }
+
+        .case-card[hidden] {
+            display: none;
+        }
+
+        .case-card-title {
+            display: block;
+            font-size: 0.875rem;
+            font-weight: 500;
+            line-height: 1.35;
+        }
+
+        .case-card-file {
+            display: block;
+            margin-top: 0.35rem;
+            font-size: 0.75rem;
+            font-family: ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas, monospace;
+            color: var(--text-muted);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 768px) {
+            .playground-sidebar {
+                display: none;
+            }
+
+            .playground-main {
+                margin-left: 0;
+            }
+
+            .playground-header {
+                flex-wrap: wrap;
+                height: auto;
+                padding: 0.875rem 1rem;
+            }
+
+            .playground-search {
+                max-width: none;
+                width: 100%;
+                order: 3;
+            }
+
+            .playground-brand span {
+                display: none;
+            }
         }
     </style>
 </head>
 <body>
-<div id="e2e-listing">
-    <div id="e2e-title">
-        <h1>
-            Fluid Player E2E cases
-        </h1>
-        <p id="e2e-note-restart">
-            Note: you need to restart the dev-server for new cases to be listed here.
+<header class="playground-header">
+    <div class="playground-brand">
+        <h1>Fluid Player</h1>
+        <span>Playground</span>
+    </div>
+    <div class="playground-search">
+        <input type="search" id="case-search" placeholder="Search test cases…" autocomplete="off" spellcheck="false">
+    </div>
+</header>
+
+<div class="playground-layout">
+    <aside class="playground-sidebar">
+        <nav id="category-nav" aria-label="Filter by category"></nav>
+    </aside>
+
+    <main class="playground-main">
+        <p class="playground-note">
+            <strong>Dev server index.</strong>
+            Open any case to preview the player. Restart <code>npm run dev-server</code> after adding new HTML files under <code>test/html/</code>.
         </p>
-    </div>
-    <div id="e2e-items">
-        <ul>
+
+        <p class="playground-empty" id="no-results" role="status">No test cases match your search.</p>
+
+        <div id="case-sections">
             <% for(var i=0; i < cases.length; i++) { %>
-            <li>
-                <a href="<%= cases[i].file %>"><%= cases[i].name %></a>
-            </li>
+            <article class="case-card-entry" data-file="<%= cases[i].file %>" data-name="<%= cases[i].name %>">
+                <a class="case-card" href="<%= cases[i].file %>">
+                    <span class="case-card-title"><%= cases[i].name %></span>
+                    <!-- <span class="case-card-file"><%= cases[i].file %></span> -->
+                </a>
+            </article>
             <% } %>
-        </ul>
-    </div>
+        </div>
+    </main>
 </div>
+
+<script>
+    (function () {
+        var entries = Array.prototype.slice.call(document.querySelectorAll('.case-card-entry'));
+        var container = document.getElementById('case-sections');
+        var nav = document.getElementById('category-nav');
+        var searchInput = document.getElementById('case-search');
+        var noResults = document.getElementById('no-results');
+
+        var categoryFromFile = function (file) {
+            var base = file.replace(/\.html$/, '');
+            if (base.indexOf('vod_') === 0) return 'VOD';
+            if (base.indexOf('hls_') === 0) return 'HLS';
+            if (base.indexOf('dash_') === 0) return 'DASH';
+            if (base.indexOf('suggested_') === 0) return 'Suggested videos';
+            if (base.indexOf('skip_') === 0) return 'Skip / return';
+            if (base.indexOf('custom_') === 0) return 'Custom';
+            if (base.indexOf('player-') === 0) return 'Player lifecycle';
+            return 'Other';
+        };
+
+        var categories = {};
+        entries.forEach(function (entry) {
+            var file = entry.getAttribute('data-file');
+            var cat = categoryFromFile(file);
+            if (!categories[cat]) categories[cat] = [];
+            categories[cat].push(entry);
+        });
+
+        var categoryOrder = ['VOD', 'HLS', 'DASH', 'Suggested videos', 'Skip / return', 'Custom', 'Player lifecycle', 'Other'];
+        var sortedCategories = categoryOrder.filter(function (c) { return categories[c]; });
+        Object.keys(categories).forEach(function (c) {
+            if (sortedCategories.indexOf(c) === -1) sortedCategories.push(c);
+        });
+
+        var sections = {};
+        sortedCategories.forEach(function (cat) {
+            var section = document.createElement('section');
+            section.className = 'case-section';
+            section.dataset.category = cat;
+
+            var heading = document.createElement('h2');
+            heading.textContent = cat;
+            section.appendChild(heading);
+
+            var grid = document.createElement('ul');
+            grid.className = 'case-grid';
+            categories[cat].forEach(function (entry) {
+                var li = document.createElement('li');
+                li.appendChild(entry.querySelector('.case-card').cloneNode(true));
+                entry.remove();
+                grid.appendChild(li);
+            });
+            section.appendChild(grid);
+            container.appendChild(section);
+            sections[cat] = section;
+        });
+
+        var activeCategory = 'all';
+        var filterNav = document.createElement('button');
+        filterNav.type = 'button';
+        filterNav.className = 'active';
+        filterNav.dataset.category = 'all';
+        filterNav.innerHTML = 'All cases <span class="count">' + entries.length + '</span>';
+        nav.appendChild(filterNav);
+
+        sortedCategories.forEach(function (cat) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.dataset.category = cat;
+            btn.innerHTML = cat + ' <span class="count">' + categories[cat].length + '</span>';
+            nav.appendChild(btn);
+        });
+
+        var matchesQuery = function (entry, query) {
+            if (!query) return true;
+            var name = (entry.getAttribute('data-name') || '').toLowerCase();
+            var file = (entry.getAttribute('data-file') || '').toLowerCase();
+            return name.indexOf(query) !== -1 || file.indexOf(query) !== -1;
+        };
+
+        var applyFilters = function () {
+            var query = (searchInput.value || '').trim().toLowerCase();
+            var visibleTotal = 0;
+
+            sortedCategories.forEach(function (cat) {
+                var section = sections[cat];
+                var sectionVisible = 0;
+                var cards = section.querySelectorAll('.case-card');
+
+                cards.forEach(function (card, idx) {
+                    var entry = categories[cat][idx];
+                    var matchCat = activeCategory === 'all' || activeCategory === cat;
+                    var matchSearch = matchesQuery(entry, query);
+                    var show = matchCat && matchSearch;
+                    card.hidden = !show;
+                    if (show) sectionVisible++;
+                });
+
+                section.hidden = sectionVisible === 0;
+                visibleTotal += sectionVisible;
+            });
+
+            noResults.classList.toggle('visible', visibleTotal === 0);
+        };
+
+        nav.addEventListener('click', function (e) {
+            var btn = e.target.closest('button');
+            if (!btn) return;
+            activeCategory = btn.dataset.category;
+            nav.querySelectorAll('button').forEach(function (b) {
+                b.classList.toggle('active', b === btn);
+            });
+            applyFilters();
+        });
+
+        searchInput.addEventListener('input', applyFilters);
+    })();
+</script>
 </body>
 </html>

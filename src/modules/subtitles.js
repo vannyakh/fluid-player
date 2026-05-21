@@ -122,10 +122,10 @@ export default function (playerInstance, options) {
                 const subtitleIcons = playerInstance.domRef.wrapper.getElementsByClassName('subtitle_button_icon');
 
                 for (let i = 0; i < subtitleIcons.length; i++) {
-                    subtitleIcons[i].className = subtitleIcons[i].className.replace("subtitle_selected", "");
+                    subtitleIcons[i].classList.remove('subtitle_selected');
                 }
 
-                subtitleChangedTo.firstChild.className += ' subtitle_selected';
+                subtitleChangedTo.firstChild.classList.add('subtitle_selected');
 
                 playerInstance.subtitlesTracks.forEach(function (subtitle) {
                     if (subtitle.label === subtitleChangedTo.innerText.replace(/(\r\n\t|\n|\r\t)/gm, "")) {
@@ -303,7 +303,7 @@ export default function (playerInstance, options) {
         // Clear all existing checkmarks
         const sizeIcons = sizeMenu.querySelectorAll('.subtitle_button_icon');
         for (let i = 0; i < sizeIcons.length; i++) {
-            sizeIcons[i].className = sizeIcons[i].className.replace("subtitle_size_selected", "");
+            sizeIcons[i].classList.remove('subtitle_size_selected');
         }
 
         // Get all size buttons (skip the back button)

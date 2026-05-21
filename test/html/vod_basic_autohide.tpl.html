@@ -2,35 +2,443 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>VOD auto-hide toolbar</title>
     <%= htmlWebpackPlugin.tags.headTags %>
-    <style lang="css">
-        #fluid-player-e2e-case {
-            width: 90%;
+    <style>
+        :root {
+            --bg: #0b0c10;
+            --surface: #14151c;
+            --surface-elevated: #1c1e28;
+            --border: #2a2d3a;
+            --text: #f0f1f5;
+            --text-muted: #9aa0b4;
+            --accent: #e50914;
+            --skeleton: #252833;
+            --skeleton-highlight: #323648;
+            --radius: 8px;
+            --nav-h: 52px;
+            --content-max: 1280px;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        .skeleton {
+            background: linear-gradient(
+                90deg,
+                var(--skeleton) 0%,
+                var(--skeleton-highlight) 45%,
+                var(--skeleton) 90%
+            );
+            background-size: 200% 100%;
+            animation: skeleton-shimmer 1.4s ease-in-out infinite;
+            border-radius: var(--radius);
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+            font-size: 15px;
+            line-height: 1.5;
+            color: var(--text);
+            background: var(--bg);
+        }
+
+        .platform-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            height: var(--nav-h);
+            padding: 0 1.25rem;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .platform-logo {
+            font-size: 1.125rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        .platform-nav-links {
+            display: flex;
+            gap: 1.25rem;
+            flex: 1;
+        }
+
+        .platform-nav-links .skeleton {
+            height: 14px;
+            width: 56px;
+        }
+
+        .platform-nav-links .skeleton:nth-child(2) { width: 72px; }
+        .platform-nav-links .skeleton:nth-child(3) { width: 48px; }
+
+        .platform-back {
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            white-space: nowrap;
+        }
+
+        .platform-back:hover {
+            color: var(--text);
+        }
+
+        .watch-page {
+            max-width: var(--content-max);
+            margin: 0 auto;
+            padding: 1.25rem 1.25rem 2.5rem;
+        }
+
+        .watch-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 1.5rem;
+            align-items: start;
+        }
+
+        .player-stage {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .player-stage > #fluid-player-e2e-case,
+        .player-stage #fluid_video_wrapper_fluid-player-e2e-case {
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            max-width: none;
+            max-height: none;
+        }
+
+        .player-stage #fluid_video_wrapper_fluid-player-e2e-case video {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        .watch-info {
+            margin-top: 1rem;
+        }
+
+        .skeleton-title-block {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .skeleton-title-block .skeleton:first-child {
+            height: 22px;
+            width: 72%;
+            max-width: 420px;
+        }
+
+        .skeleton-title-block .skeleton:nth-child(2) {
+            height: 14px;
+            width: 40%;
+            max-width: 200px;
+        }
+
+        .skeleton-title-block .skeleton:nth-child(3) {
+            height: 12px;
+            width: 100%;
+            margin-top: 0.5rem;
+        }
+
+        .skeleton-title-block .skeleton:nth-child(4) {
+            height: 12px;
+            width: 88%;
+        }
+
+        .watch-info-real h1 {
+            margin: 0 0 0.35rem;
+            font-size: 1.375rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .watch-badge {
+            display: inline-block;
+            margin: 0 0 0.5rem;
+            padding: 0.2rem 0.5rem;
+            font-size: 0.6875rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--accent);
+            background: rgba(229, 9, 20, 0.12);
+            border-radius: 4px;
+        }
+
+        .watch-info-real .watch-meta {
+            margin: 0 0 0.75rem;
+            font-size: 0.8125rem;
+            color: var(--text-muted);
+        }
+
+        .watch-info-real .watch-desc {
+            margin: 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            max-width: 52rem;
+        }
+
+        .watch-info-real code {
+            font-size: 0.8125rem;
+            color: var(--text);
+        }
+
+        .watch-sidebar h2 {
+            margin: 0 0 0.75rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+
+        .related-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+
+        .related-item {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 0.625rem;
+            align-items: start;
+        }
+
+        .related-item .skeleton-thumb {
+            aspect-ratio: 16 / 9;
+            width: 100%;
+        }
+
+        .related-item .skeleton-lines {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            padding-top: 0.25rem;
+        }
+
+        .related-item .skeleton-lines .skeleton:first-child {
+            height: 12px;
+            width: 100%;
+        }
+
+        .related-item .skeleton-lines .skeleton:last-child {
+            height: 10px;
+            width: 55%;
+        }
+
+        .related-real {
+            display: none;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .related-real a {
+            display: grid;
+            grid-template-columns: 120px 1fr;
+            gap: 0.625rem;
+            text-decoration: none;
+            color: inherit;
+            border-radius: var(--radius);
+            transition: background 0.12s;
+        }
+
+        .related-real a:hover {
+            background: var(--surface-elevated);
+        }
+
+        .related-real span {
+            display: block;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            line-height: 1.35;
+        }
+
+        .related-real small {
+            display: block;
+            margin-top: 0.2rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        body:not(.platform-ready) .watch-info-real,
+        body:not(.platform-ready) .related-real {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        body.platform-ready .skeleton-title-block,
+        body.platform-ready .related-skeleton {
+            display: none;
+        }
+
+        body.platform-ready .watch-info-real {
+            position: static;
+            width: auto;
+            height: auto;
+            margin: 0;
+            overflow: visible;
+            clip: auto;
+            white-space: normal;
+        }
+
+        body.platform-ready .related-real {
+            display: flex;
+        }
+
+        @media (max-width: 960px) {
+            .watch-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .watch-sidebar {
+                order: 3;
+            }
         }
     </style>
 </head>
 <body>
 
-<video id="fluid-player-e2e-case">
-    <source src="https://cdn.fluidplayer.com/videos/valerian-1080p.mkv" data-fluid-hd title="1080p" type="video/mp4"/>
-    <source src="https://cdn.fluidplayer.com/videos/valerian-720p.mkv" data-fluid-hd title="720p" type="video/mp4"/>
-    <source src="https://cdn.fluidplayer.com/videos/valerian-480p.mkv" title="480p" type="video/mp4"/>
-</video>
+<header class="platform-nav">
+    <a class="platform-logo" href="/">StreamPlay</a>
+    <nav class="platform-nav-links" aria-hidden="true">
+        <span class="skeleton"></span>
+        <span class="skeleton"></span>
+        <span class="skeleton"></span>
+    </nav>
+    <a class="platform-back" href="/">← Playground</a>
+</header>
+
+<div class="watch-page">
+    <div class="watch-layout">
+        <section class="watch-primary">
+            <div class="player-stage">
+                <video id="fluid-player-e2e-case">
+                    <source src="https://cdn.fluidplayer.com/videos/valerian-1080p.mkv" data-fluid-hd title="1080p" type="video/mp4"/>
+                    <source src="https://cdn.fluidplayer.com/videos/valerian-720p.mkv" data-fluid-hd title="720p" type="video/mp4"/>
+                    <source src="https://cdn.fluidplayer.com/videos/valerian-480p.mkv" title="480p" type="video/mp4"/>
+                </video>
+            </div>
+
+            <div class="watch-info">
+                <div class="skeleton-title-block" aria-hidden="true">
+                    <span class="skeleton"></span>
+                    <span class="skeleton"></span>
+                    <span class="skeleton"></span>
+                    <span class="skeleton"></span>
+                </div>
+                <div class="watch-info-real">
+                    <p class="watch-badge">Auto-hide controls</p>
+                    <h1>Valerian and the City of a Thousand Planets</h1>
+                    <p class="watch-meta">Control bar hides after 1s idle · animated · same Valerian sources</p>
+                    <p class="watch-desc">
+                        <code>layoutControls.controlBar</code> with
+                        <code>autoHide: true</code>,
+                        <code>autoHideTimeout: 1</code>,
+                        <code>animated: true</code>.
+                        Move the pointer over the player to bring controls back.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <aside class="watch-sidebar">
+            <h2>Up next</h2>
+            <ul class="related-list related-skeleton" aria-hidden="true">
+                <li class="related-item">
+                    <span class="skeleton skeleton-thumb"></span>
+                    <span class="skeleton-lines">
+                        <span class="skeleton"></span>
+                        <span class="skeleton"></span>
+                    </span>
+                </li>
+                <li class="related-item">
+                    <span class="skeleton skeleton-thumb"></span>
+                    <span class="skeleton-lines">
+                        <span class="skeleton"></span>
+                        <span class="skeleton"></span>
+                    </span>
+                </li>
+                <li class="related-item">
+                    <span class="skeleton skeleton-thumb"></span>
+                    <span class="skeleton-lines">
+                        <span class="skeleton"></span>
+                        <span class="skeleton"></span>
+                    </span>
+                </li>
+            </ul>
+            <div class="related-real">
+                <a href="vod_basic.html">
+                    <span>Basic VOD<small>vod_basic.html — default controls</small></span>
+                </a>
+                <a href="/">
+                    <span>Playground index<small>All test cases</small></span>
+                </a>
+                <a href="hls_vod.html">
+                    <span>HLS VOD<small>hls_vod.html</small></span>
+                </a>
+            </div>
+        </aside>
+    </div>
+</div>
 
 <%= htmlWebpackPlugin.tags.bodyTags %>
 
 <script>
+    var skeletonShownAt = Date.now();
+    var minSkeletonMs = 700;
+
+    function revealPlatform() {
+        var elapsed = Date.now() - skeletonShownAt;
+        var delay = Math.max(0, minSkeletonMs - elapsed);
+        setTimeout(function () {
+            document.body.classList.add('platform-ready');
+        }, delay);
+    }
+
+    revealPlatform();
+
     var instance = fluidPlayer('fluid-player-e2e-case', {
         layoutControls: {
             controlBar: {
                 autoHide: true,
                 autoHideTimeout: 1,
                 animated: true
-            },
+            }
         }
     });
 </script>
