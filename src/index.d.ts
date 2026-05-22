@@ -89,6 +89,7 @@ declare interface LayoutControls {
         height: string;
         marginTop: number;
         horizontalAlign: 'center' | 'left' | 'right';
+        motion: boolean;
         parentElement: string | null;
         parentId: string | null;
         pageElement: string | null;

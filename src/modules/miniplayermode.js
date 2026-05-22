@@ -1,11 +1,5 @@
 import { displayModes } from '../constants/constants';
 import {
-    animateMiniPlayerEnter,
-    animateMiniPlayerExit,
-    animateMiniPlayerPlaceholder,
-    animateMiniPlayerSnap,
-} from './miniplayermotion';
-import {
     createSnapGhost,
     findNearestSnapTarget,
     getSnapTargets,
@@ -45,6 +39,12 @@ const MINI_PLAYER_TOGGLE_EVENT = 'miniPlayerToggle';
 
 const DRAG_ACTIVATION_DISTANCE = 6;
 
+const MINI_PLAYER_TRANSITION_CLASS = 'fp_mini_player_transition';
+const MINI_PLAYER_VISIBLE_CLASS = 'fp_mini_player_visible';
+const PLACEHOLDER_TRANSITION_CLASS = 'fp_placeholder_transition';
+const PLACEHOLDER_VISIBLE_CLASS = 'fp_placeholder_visible';
+const CSS_MOTION_FALLBACK_MS = 500;
+
 const DRAG_IGNORE_SELECTOR = [
     '.fluid_button',
     '.mini-player-close-button',
@@ -74,7 +74,6 @@ export default function miniPlayerModeModule(playerInstance) {
     let isGlobalFloat = false;
     let dragBindings = null;
     let snapGhostElement = null;
-    let motionBusy = false;
 
     const getMiniPlayerOptions = () => {
         const options = playerInstance.displayOptions.layoutControls.miniPlayer || {};
@@ -97,13 +96,58 @@ export default function miniPlayerModeModule(playerInstance) {
         };
     };
 
-    const clearMotionStyles = (element) => {
-        if (!element) {
+    const clearMiniPlayerTransitionClasses = (videoWrapper) => {
+        if (!videoWrapper) {
             return;
         }
 
-        element.style.opacity = '';
-        element.style.transform = '';
+        videoWrapper.classList.remove(MINI_PLAYER_TRANSITION_CLASS, MINI_PLAYER_VISIBLE_CLASS);
+    };
+
+    const waitForCssTransition = (element, onComplete) => {
+        if (!element) {
+            onComplete();
+            return;
+        }
+
+        let completed = false;
+
+        const finish = () => {
+            if (completed) {
+                return;
+            }
+
+            completed = true;
+            element.removeEventListener('transitionend', onTransitionEnd);
+            onComplete();
+        };
+
+        const onTransitionEnd = (event) => {
+            if (event.target !== element) {
+                return;
+            }
+
+            if (event.propertyName === 'opacity' || event.propertyName === 'transform') {
+                finish();
+            }
+        };
+
+        element.addEventListener('transitionend', onTransitionEnd);
+        window.setTimeout(finish, CSS_MOTION_FALLBACK_MS);
+    };
+
+    const revealMiniPlayerWithTransition = (videoWrapper) => {
+        if (!getMiniPlayerOptions().motion) {
+            return;
+        }
+
+        videoWrapper.classList.add(MINI_PLAYER_TRANSITION_CLASS);
+
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                videoWrapper.classList.add(MINI_PLAYER_VISIBLE_CLASS);
+            });
+        });
     };
 
     const resolveElement = (ref) => {
@@ -199,12 +243,21 @@ export default function miniPlayerModeModule(playerInstance) {
 
         originalParent.insertBefore(placeholderElement, originalNextSibling);
 
-        animateMiniPlayerPlaceholder(placeholderElement, getMiniPlayerOptions().motion);
+        if (getMiniPlayerOptions().motion) {
+            placeholderElement.classList.add(PLACEHOLDER_TRANSITION_CLASS);
+            requestAnimationFrame(() => {
+                placeholderElement.classList.add(PLACEHOLDER_VISIBLE_CLASS);
+            });
+        }
     };
 
     const removePlayerPlaceholder = () => {
-        if (placeholderElement?.parentElement) {
-            placeholderElement.parentElement.removeChild(placeholderElement);
+        if (placeholderElement) {
+            placeholderElement.classList.remove(PLACEHOLDER_TRANSITION_CLASS, PLACEHOLDER_VISIBLE_CLASS);
+
+            if (placeholderElement.parentElement) {
+                placeholderElement.parentElement.removeChild(placeholderElement);
+            }
         }
 
         placeholderElement = null;
@@ -396,12 +449,8 @@ export default function miniPlayerModeModule(playerInstance) {
             finishDrag();
 
             if (options.dragSnap && activeSnapTarget) {
-                animateMiniPlayerSnap(
-                    videoWrapper,
-                    activeSnapTarget.left,
-                    activeSnapTarget.top,
-                    options.motion,
-                );
+                videoWrapper.style.left = `${activeSnapTarget.left}px`;
+                videoWrapper.style.top = `${activeSnapTarget.top}px`;
             } else {
                 videoWrapper.style.left = `${left}px`;
                 videoWrapper.style.top = `${top}px`;
@@ -555,7 +604,7 @@ export default function miniPlayerModeModule(playerInstance) {
         videoWrapper.classList.remove(FLUID_PLAYER_WRAPPER_CLASS);
         removeMiniPlayerPositionClasses(videoWrapper);
         clearMiniPlayerPositionStyles(videoWrapper);
-        clearMotionStyles(videoWrapper);
+        clearMiniPlayerTransitionClasses(videoWrapper);
 
         if (originalWidth !== null) {
             videoWrapper.style.width = `${originalWidth}px`;
@@ -593,7 +642,7 @@ export default function miniPlayerModeModule(playerInstance) {
         playerInstance.miniPlayerToggledOn = true;
         notifyMiniPlayerStateChange(true);
 
-        animateMiniPlayerEnter(videoWrapper, position, getMiniPlayerOptions().motion);
+        revealMiniPlayerWithTransition(videoWrapper);
     };
 
     const adaptNonLinearSize = (width, height, mobileWidth) => {
@@ -770,13 +819,9 @@ export default function miniPlayerModeModule(playerInstance) {
         if (forceToggle === 'off' || playerInstance.miniPlayerToggledOn) {
             const wrapper = playerInstance.domRef.wrapper;
 
-            if (options.motion && playerInstance.miniPlayerToggledOn && !motionBusy) {
-                motionBusy = true;
-                animateMiniPlayerExit(wrapper, options.motion)
-                    .finally(() => {
-                        motionBusy = false;
-                        toggleMiniPlayerOff();
-                    });
+            if (options.motion && playerInstance.miniPlayerToggledOn && wrapper.classList.contains(MINI_PLAYER_TRANSITION_CLASS)) {
+                wrapper.classList.remove(MINI_PLAYER_VISIBLE_CLASS);
+                waitForCssTransition(wrapper, () => toggleMiniPlayerOff());
             } else {
                 toggleMiniPlayerOff();
             }
@@ -828,6 +873,8 @@ export default function miniPlayerModeModule(playerInstance) {
         } else {
             miniPlayerButton.style.display = 'none';
         }
+
+        playerInstance.syncPlayerMotionClass?.();
     };
 
     playerInstance.destructors.push(() => {

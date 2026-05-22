@@ -210,6 +210,7 @@ const fluidPlayerClass = function () {
                     height: 'auto',
                     marginTop: 0,
                     horizontalAlign: 'center',
+                    motion: true,
                     parentElement: null,
                     pageElement: null,
                     layoutElement: null,
@@ -1740,6 +1741,10 @@ const fluidPlayerClass = function () {
     };
 
     self.handleMouseleave = (event) => {
+        if (self.isSettingsMenuOpen?.()) {
+            return;
+        }
+
         if (typeof event.clientX !== 'undefined'
             && self.domRef.wrapper.contains(document.elementFromPoint(event.clientX, event.clientY))) {
             //false positive; we didn't actually leave the player
@@ -2758,6 +2763,10 @@ const fluidPlayerClass = function () {
     };
 
     self.hideTitle = () => {
+        if (self.isSettingsMenuOpen?.()) {
+            return;
+        }
+
         const titleHolder = self.domRef.wrapper.querySelector('.fp_title');
 
         if (!self.hasTitle()) {
@@ -3000,6 +3009,10 @@ const fluidPlayerClass = function () {
     };
 
     self.hideControlBar = () => {
+        if (self.isSettingsMenuOpen?.()) {
+            return;
+        }
+
         if (self.isCurrentlyPlayingAd && !self.domRef.player.paused) {
             self.toggleAdCountdown(true);
         }

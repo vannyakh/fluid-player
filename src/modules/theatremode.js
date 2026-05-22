@@ -63,6 +63,7 @@ export default function theatreModeModule(playerInstance) {
             height: mode.height || legacySettings.height || 'auto',
             marginTop: mode.marginTop ?? legacySettings.marginTop ?? 0,
             horizontalAlign: mode.horizontalAlign || legacySettings.horizontalAlign || 'center',
+            motion: mode.motion !== false,
             onStateChange: mode.onStateChange || mode.onTheatreModeChange || null,
         };
     };
@@ -260,6 +261,9 @@ export default function theatreModeModule(playerInstance) {
 
         if (sidebar) {
             sidebar.classList.add('fluid_theatre_sidebar_hidden');
+            sidebar.style.opacity = '';
+            sidebar.style.transform = '';
+            sidebar.style.visibility = '';
         }
     };
 
@@ -336,6 +340,41 @@ export default function theatreModeModule(playerInstance) {
         }
     };
 
+    const getTheatreButton = () => playerInstance.domRef.wrapper?.querySelector('.fluid_control_theatre');
+
+    const pulseTheatreIcon = (theatreButton) => {
+        if (!theatreButton) {
+            return;
+        }
+
+        theatreButton.classList.remove('fp_theatre_icon_pulse');
+        void theatreButton.offsetWidth;
+        theatreButton.classList.add('fp_theatre_icon_pulse');
+
+        window.setTimeout(() => {
+            theatreButton.classList.remove('fp_theatre_icon_pulse');
+        }, 400);
+    };
+
+    const syncTheatreButtonUI = () => {
+        const theatreButton = getTheatreButton();
+
+        if (!theatreButton) {
+            return;
+        }
+
+        const active = !!playerInstance.theatreMode;
+
+        theatreButton.classList.toggle('fluid_button_theatre_active', active);
+        theatreButton.setAttribute('aria-pressed', active ? 'true' : 'false');
+
+        const tooltipLabel = theatreButton.querySelector('.fluid_control_tooltip_label');
+
+        if (tooltipLabel) {
+            tooltipLabel.textContent = active ? 'Default view' : 'Theatre mode';
+        }
+    };
+
     const notifyTheatreStateChange = (enabled) => {
         const options = getTheatreOptions();
         const eventName = enabled ? 'theatreModeOn' : 'theatreModeOff';
@@ -344,6 +383,8 @@ export default function theatreModeModule(playerInstance) {
             bubbles: false,
             cancelable: true,
         }));
+
+        syncTheatreButtonUI();
 
         if (typeof options.onStateChange === 'function') {
             options.onStateChange({
@@ -366,7 +407,9 @@ export default function theatreModeModule(playerInstance) {
 
         playerInstance.debugMessage?.('Toggling theatre mode');
 
+        const options = getTheatreOptions();
         const previousDisplayMode = playerInstance.getPreviousDisplayMode();
+
         playerInstance.resetDisplayMode(displayModes.THEATER);
 
         const enabling = !playerInstance.theatreMode;
@@ -375,7 +418,7 @@ export default function theatreModeModule(playerInstance) {
         applyParentTheatreLayout(enabling);
 
         playerInstance.theatreMode = enabling;
-        playerInstance.theatreModeAdvanced = !!getTheatreOptions().expandPage;
+        playerInstance.theatreModeAdvanced = !!options.expandPage;
         playerInstance.fluidStorage.fluidTheatre = enabling;
 
         notifyTheatreStateChange(enabling);
@@ -420,11 +463,25 @@ export default function theatreModeModule(playerInstance) {
                 playerInstance.domRef.player.parentNode,
                 'click',
                 '.fluid_control_theatre',
-                () => playerInstance.theatreToggle(),
+                () => {
+                    pulseTheatreIcon(getTheatreButton());
+                    playerInstance.theatreToggle();
+                },
             );
         } else {
             theatreButton.style.display = 'none';
         }
+
+        syncTheatreButtonUI();
+        playerInstance.syncPlayerMotionClass?.();
+    };
+
+    playerInstance.syncPlayerMotionClass = () => {
+        const layout = playerInstance.displayOptions.layoutControls || {};
+        const theatreMotion = (layout.theatreMode || {}).motion !== false;
+        const miniMotion = (layout.miniPlayer || {}).motion !== false;
+
+        document.body.classList.toggle('fp_player_motion_enabled', theatreMotion || miniMotion);
     };
 
     playerInstance.restoreTheatreFromStorage = () => {

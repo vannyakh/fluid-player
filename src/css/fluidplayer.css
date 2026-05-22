@@ -713,6 +713,16 @@
     --fp-settings-toggle-height: 20px;
     --fp-settings-toggle-thumb: 16px;
     --fp-settings-toggle-inset: 2px;
+    --fp-motion-duration: 0.45s;
+    --fp-motion-duration-fast: 0.35s;
+    --fp-motion-ease: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fluid_video_wrapper.fluid_player_layout_default {
+        --fp-motion-duration: 0.01ms;
+        --fp-motion-duration-fast: 0.01ms;
+    }
 }
 
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container {
@@ -728,9 +738,9 @@
     z-index: 1;
     transform: translateY(0);
     transition:
-        opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        visibility var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease);
     will-change: transform, opacity;
 }
 
@@ -783,9 +793,9 @@
     transform: translateY(100%);
     pointer-events: none;
     transition:
-        opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        visibility var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease);
 }
 
 .fluid_video_wrapper.fluid_player_layout_default .fade_in {
@@ -794,9 +804,9 @@
     transform: translateY(0);
     pointer-events: auto;
     transition:
-        opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        visibility var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease);
 }
 
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container.fade_out {
@@ -1450,6 +1460,7 @@ _:-ms-lang(x),
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_playback_rate:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_download:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:before,
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:after,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_subtitles:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_cardboard:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_mini_player:before {
@@ -1621,8 +1632,65 @@ _:-ms-lang(x),
     background-image: url('../static/icons/prepercent.svg');
 }
 
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:before,
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:after {
+    -webkit-transition:
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        -webkit-transform var(--fp-motion-duration-fast) var(--fp-motion-ease);
+    transition:
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration-fast) var(--fp-motion-ease);
+}
+
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:before {
     background-image: url('../static/icons/thress.svg');
+    opacity: 1;
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:after {
+    background-image: url('../static/icons/default-views.svg');
+    opacity: 0;
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre.fluid_button_theatre_active:before {
+    opacity: 0;
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre.fluid_button_theatre_active:after {
+    opacity: 1;
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre.fp_theatre_icon_pulse::before,
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre.fp_theatre_icon_pulse::after {
+    -webkit-animation: fp-theatre-icon-pulse 0.4s var(--fp-motion-ease);
+    animation: fp-theatre-icon-pulse 0.4s var(--fp-motion-ease);
+}
+
+@-webkit-keyframes fp-theatre-icon-pulse {
+    0% {
+        -webkit-transform: translate(-50%, -50%) scale(1);
+        transform: translate(-50%, -50%) scale(1);
+    }
+    40% {
+        -webkit-transform: translate(-50%, -50%) scale(1.16);
+        transform: translate(-50%, -50%) scale(1.16);
+    }
+    100% {
+        -webkit-transform: translate(-50%, -50%) scale(1);
+        transform: translate(-50%, -50%) scale(1);
+    }
+}
+
+@keyframes fp-theatre-icon-pulse {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+    }
+    40% {
+        transform: translate(-50%, -50%) scale(1.16);
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(1);
+    }
 }
 
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_subtitles:before {
@@ -1642,9 +1710,7 @@ _:-ms-lang(x),
 }
 
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_download:before {
-    background-image: url('../static/fluid-icons.svg');
-    background-size: 336px 76px;
-    background-position: -194px -18px;
+    background-image: url('../static/icons/download.svg');
 }
 
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_cardboard:before {
@@ -1674,12 +1740,29 @@ _:-ms-lang(x),
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_playback_rate:hover:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_download:hover:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:hover:before,
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:hover:after,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_subtitles:hover:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_cardboard:hover:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_mini_player:hover:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_controls_right .fluid_volume_group:hover .fluid_button_volume:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_controls_right .fluid_volume_group:hover .fluid_button_volume_low:before,
 .fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_controls_right .fluid_volume_group:hover .fluid_button_mute:before {
+    opacity: var(--fp-icon-opacity-hover);
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:hover:before {
+    opacity: var(--fp-icon-opacity-hover);
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre.fluid_button_theatre_active:hover:before {
+    opacity: 0;
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre:hover:after {
+    opacity: 0;
+}
+
+.fluid_video_wrapper.fluid_player_layout_default .fluid_controls_container .fluid_button.fluid_button_theatre.fluid_button_theatre_active:hover:after {
     opacity: var(--fp-icon-opacity-hover);
 }
 
@@ -1858,12 +1941,22 @@ _:-ms-lang(x),
     aspect-ratio: 16 / 9;
     height: auto !important;
     max-height: min(56.25vw, 85vh);
+    transition:
+        max-height var(--fp-motion-duration) var(--fp-motion-ease),
+        width var(--fp-motion-duration) var(--fp-motion-ease),
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease);
+    will-change: max-height, opacity;
 }
 
 .fluid_theatre_page_active {
     width: 100% !important;
     max-width: 100% !important;
     box-sizing: border-box;
+    transition:
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease),
+        padding var(--fp-motion-duration) var(--fp-motion-ease);
 }
 
 .fluid_theatre_layout_active {
@@ -1871,10 +1964,26 @@ _:-ms-lang(x),
     max-width: 100% !important;
     grid-template-columns: 1fr !important;
     box-sizing: border-box;
+    transition:
+        grid-template-columns var(--fp-motion-duration) var(--fp-motion-ease),
+        gap var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        width var(--fp-motion-duration-fast) var(--fp-motion-ease);
 }
 
 .fluid_theatre_sidebar_hidden {
     display: none !important;
+}
+
+body.fp_player_motion_enabled .fluid_theatre_sidebar_hidden {
+    display: block !important;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transform: translateX(16px);
+    transition:
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease),
+        visibility var(--fp-motion-duration-fast) var(--fp-motion-ease);
 }
 
 body.fluid_theatre_body_active {
@@ -1897,6 +2006,7 @@ body.fluid_theatre_body_active {
     z-index: 10;
     box-shadow: none;
     box-sizing: border-box;
+    transition: opacity var(--fp-motion-duration-fast) var(--fp-motion-ease);
 }
 
 .fluid_theatre_mode video {
@@ -1957,6 +2067,49 @@ body.fluid_theatre_body_active {
     bottom: var(--fp-mini-player-inset);
     right: var(--fp-mini-player-inset);
     z-index: 99999;
+}
+
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition {
+    opacity: 0;
+    transition:
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease),
+        left var(--fp-motion-duration) var(--fp-motion-ease),
+        top var(--fp-motion-duration) var(--fp-motion-ease);
+}
+
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fp_mini_player_visible {
+    opacity: 1;
+}
+
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fluid_mini_player_mode--top-left:not(.fp_mini_player_visible),
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fluid_mini_player_mode--top-right:not(.fp_mini_player_visible) {
+    transform: translateY(-16px);
+}
+
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fluid_mini_player_mode--bottom-left:not(.fp_mini_player_visible),
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fluid_mini_player_mode--bottom-right:not(.fp_mini_player_visible) {
+    transform: translateY(16px);
+}
+
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fluid_mini_player_mode--custom-position:not(.fp_mini_player_visible) {
+    transform: translateY(12px);
+}
+
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fp_mini_player_visible.fluid_mini_player_mode--top-left,
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fp_mini_player_visible.fluid_mini_player_mode--top-right,
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fp_mini_player_visible.fluid_mini_player_mode--bottom-left,
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fp_mini_player_visible.fluid_mini_player_mode--bottom-right,
+.fluid_video_wrapper.fluid_mini_player_mode.fp_mini_player_transition.fp_mini_player_visible.fluid_mini_player_mode--custom-position {
+    transform: translateY(0);
+}
+
+.fluid_video_wrapper.fluid_mini_player_mode--custom-position {
+    transition:
+        left var(--fp-motion-duration) var(--fp-motion-ease),
+        top var(--fp-motion-duration) var(--fp-motion-ease),
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease);
 }
 
 .source_button_icon {
@@ -2076,6 +2229,19 @@ body.fluid_theatre_body_active {
     cursor: pointer;
 }
 
+.fluidplayer-miniplayer-player-placeholder.fp_placeholder_transition {
+    opacity: 0;
+    transform: translateY(8px);
+    transition:
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease);
+}
+
+.fluidplayer-miniplayer-player-placeholder.fp_placeholder_transition.fp_placeholder_visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
 .fluid_video_wrapper.fluid_mini_player_mode.fluid_video_wrapper.fluid_mini_player_mode--top-left {
     top: var(--fp-mini-player-inset, 12px);
     left: var(--fp-mini-player-inset, 12px);
@@ -2141,7 +2307,10 @@ body.fluid_theatre_body_active {
     background: rgba(0, 0, 0, 0.2);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
     opacity: 0;
-    transition: opacity 0.15s ease-out, left 0.12s ease-out, top 0.12s ease-out;
+    transition:
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        left var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        top var(--fp-motion-duration-fast) var(--fp-motion-ease);
 }
 
 .fluid_mini_player_snap_ghost--visible {
@@ -2292,6 +2461,14 @@ body.fluid_theatre_body_active {
 
 .fluid_video_wrapper.fluid_player_layout_default .fluid_settings_menu.fp_show {
     display: block;
+}
+
+.fluid_video_wrapper.fluid_player_layout_default.fp_settings_menu_open .fluid_controls_container,
+.fluid_video_wrapper.fluid_player_layout_default.fp_settings_menu_open .fluid_controls_container.fade_out {
+    visibility: visible;
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
 }
 
 .fluid_video_wrapper.fluid_player_layout_default .fluid_settings_panel_main {
@@ -2977,10 +3154,10 @@ body.fluid_theatre_body_active {
     visibility: hidden;
     pointer-events: none;
     transition:
-        opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        visibility 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        transform 0.35s cubic-bezier(0.4, 0, 0.2, 1),
-        bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        opacity var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        visibility var(--fp-motion-duration-fast) var(--fp-motion-ease),
+        transform var(--fp-motion-duration) var(--fp-motion-ease),
+        bottom var(--fp-motion-duration) var(--fp-motion-ease);
     will-change: transform, opacity, bottom;
 }
 

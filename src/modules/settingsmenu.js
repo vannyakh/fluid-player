@@ -128,6 +128,8 @@ export default function settingsMenuModule(playerInstance) {
         };
     };
 
+    const SETTINGS_MENU_IDLE_MS = 5000;
+
     let sleepTimerId = null;
     let menuRoot = null;
     let mainPanel = null;
@@ -135,6 +137,8 @@ export default function settingsMenuModule(playerInstance) {
     let subPanelTitle = null;
     let subPanelContent = null;
     let isOpen = false;
+    let menuIdleTimeout = null;
+    let menuActivityListenersBound = false;
 
     playerInstance.getQualitySourceBadge = (title, isHD = false) => {
         const normalized = String(title).toLowerCase();
@@ -481,14 +485,66 @@ export default function settingsMenuModule(playerInstance) {
         return playerInstance.domRef.wrapper?.querySelector('.fluid_settings_speed_host');
     };
 
-    const closeSettingsMenu = () => {
+    const clearMenuIdleTimer = () => {
+        if (menuIdleTimeout) {
+            clearTimeout(menuIdleTimeout);
+            menuIdleTimeout = null;
+        }
+    };
+
+    const keepControlsVisibleWhileMenuOpen = () => {
+        playerInstance.newActivity = true;
+        playerInstance.isUserActive = true;
+        clearTimeout(playerInstance.inactivityTimeout);
+        playerInstance.showControlBar?.({ type: 'userActive' });
+    };
+
+    const resetMenuIdleTimer = () => {
+        clearMenuIdleTimer();
+
+        if (!isOpen) {
+            return;
+        }
+
+        menuIdleTimeout = setTimeout(() => {
+            closeSettingsMenu({ hideControls: true });
+        }, SETTINGS_MENU_IDLE_MS);
+    };
+
+    const onSettingsMenuActivity = () => {
+        if (!isOpen) {
+            return;
+        }
+
+        keepControlsVisibleWhileMenuOpen();
+        resetMenuIdleTimer();
+    };
+
+    const hideControlsAfterMenuClose = () => {
+        playerInstance.newActivity = false;
+        playerInstance.isUserActive = false;
+        clearTimeout(playerInstance.inactivityTimeout);
+        playerInstance.hideControlBar?.();
+        playerInstance.hideTitle?.();
+    };
+
+    const closeSettingsMenu = (options = {}) => {
+        const { hideControls = false } = options;
+
         if (!menuRoot) {
             return;
         }
+
+        clearMenuIdleTimer();
         menuRoot.classList.remove('fp_show');
         isOpen = false;
+        playerInstance.domRef.wrapper?.classList.remove('fp_settings_menu_open');
         showMainPanel();
         playerInstance.domRef.wrapper?.querySelector('.fluid_control_video_source')?.classList.remove('fluid_settings_active');
+
+        if (hideControls) {
+            hideControlsAfterMenuClose();
+        }
     };
 
     const showMainPanel = () => {
@@ -536,6 +592,7 @@ export default function settingsMenuModule(playerInstance) {
 
         toggle.addEventListener('click', (event) => {
             event.stopPropagation();
+            onSettingsMenuActivity();
             const stored = getStoredSettings();
             const turningOn = !toggle.classList.contains('fp_on');
             const exclusiveGroup = EXCLUSIVE_TOGGLE_GROUPS.find((group) => group.includes(id));
@@ -574,6 +631,7 @@ export default function settingsMenuModule(playerInstance) {
 
         row.addEventListener('click', (event) => {
             event.stopPropagation();
+            onSettingsMenuActivity();
             openSettingsSubPanel(panelId);
         });
 
@@ -728,6 +786,7 @@ export default function settingsMenuModule(playerInstance) {
     };
 
     const openSettingsSubPanel = (panelId) => {
+        onSettingsMenuActivity();
         if (panelId === 'quality') {
             const list = playerInstance.domRef.wrapper?.querySelector('.fluid_video_sources_list');
             if (list) {
@@ -818,6 +877,8 @@ export default function settingsMenuModule(playerInstance) {
         playerInstance.updateVideoSourceBadge?.();
     };
 
+    playerInstance.isSettingsMenuOpen = () => isOpen;
+
     playerInstance.openSettingsMenu = () => {
         if (!getOptions().enabled || !menuRoot) {
             return;
@@ -834,6 +895,9 @@ export default function settingsMenuModule(playerInstance) {
         showMainPanel();
         menuRoot.classList.add('fp_show');
         isOpen = true;
+        playerInstance.domRef.wrapper?.classList.add('fp_settings_menu_open');
+        keepControlsVisibleWhileMenuOpen();
+        resetMenuIdleTimer();
         playerInstance.updateSettingsMenuValues?.();
         playerInstance.domRef.wrapper?.querySelector('.fluid_control_video_source')?.classList.add('fluid_settings_active');
     };
@@ -927,6 +991,7 @@ export default function settingsMenuModule(playerInstance) {
         backButton.setAttribute('aria-label', 'Back');
         backButton.addEventListener('click', (event) => {
             event.stopPropagation();
+            onSettingsMenuActivity();
             showMainPanel();
         });
 
@@ -995,6 +1060,43 @@ export default function settingsMenuModule(playerInstance) {
                 closeSettingsMenu();
             });
         }
+
+        if (!menuActivityListenersBound) {
+            menuActivityListenersBound = true;
+
+            const wrapper = playerInstance.domRef.wrapper;
+            const menuActivityEvents = ['click', 'mousemove', 'touchstart', 'keydown'];
+
+            menuActivityEvents.forEach((eventName) => {
+                menuRoot.addEventListener(eventName, onSettingsMenuActivity, { passive: true });
+            });
+
+            if (wrapper) {
+                const controlsContainer = wrapper.querySelector('.fluid_controls_container');
+
+                menuActivityEvents.forEach((eventName) => {
+                    wrapper.addEventListener(eventName, (event) => {
+                        if (!isOpen) {
+                            return;
+                        }
+
+                        const target = event.target;
+
+                        if (
+                            menuRoot?.contains(target)
+                            || controlsContainer?.contains(target)
+                            || settingsButton?.contains(target)
+                        ) {
+                            onSettingsMenuActivity();
+                        }
+                    }, { passive: true });
+                });
+            }
+        }
+
+        playerInstance.destructors.push(() => {
+            clearMenuIdleTimer();
+        });
 
         playerInstance.updateSettingsMenuValues?.();
     };
