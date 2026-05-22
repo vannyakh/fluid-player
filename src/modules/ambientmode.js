@@ -595,7 +595,10 @@ export default function ambientModeModule(playerInstance) {
     };
 
     playerInstance.initAmbientMode = () => {
-        ensureCrossOrigin();
+        if (isEnabled()) {
+            ensureCrossOrigin();
+        }
+
         ensureContainer();
 
         const wrapper = getWrapper();

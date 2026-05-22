@@ -425,11 +425,8 @@ const fluidPlayerClass = function () {
             playerNode.addEventListener('loadedmetadata', self.mainVideoReady);
         }
 
-        if (
-            self.displayOptions.layoutControls.showCardBoardView
-            || self.displayOptions.layoutControls.settingsMenu?.ambientMode !== false
-        ) {
-            // Required for canvas ambient sampling and cardboard on cross-origin media
+        if (self.displayOptions.layoutControls.showCardBoardView) {
+            // Required for cardboard view on cross-origin media
             playerNode.crossOrigin = 'anonymous';
         }
 
@@ -1096,7 +1093,11 @@ const fluidPlayerClass = function () {
     };
 
     self.syncControlsBarLayout = () => {
-        const hasSkipControls = !!self.domRef.wrapper?.querySelector('.fluid_controls_container.skip_controls');
+        if (!self.domRef.wrapper) {
+            return;
+        }
+
+        const hasSkipControls = !!self.domRef.wrapper.querySelector('.fluid_controls_container.skip_controls');
 
         self.domRef.wrapper.style.setProperty(
             '--fp-controls-left-slots',

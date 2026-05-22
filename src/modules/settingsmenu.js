@@ -211,16 +211,10 @@ export default function settingsMenuModule(playerInstance) {
         if (!isAudioProcessingMenuAvailable()) {
             stored.stableVolume = false;
             stored.voiceBoost = false;
+            return stored;
         }
 
         EXCLUSIVE_TOGGLE_GROUPS.forEach((group) => {
-            if (!isAudioProcessingMenuAvailable() && group.includes('stableVolume')) {
-                group.forEach((key) => {
-                    stored[key] = false;
-                });
-                return;
-            }
-
             const activeInGroup = group.filter((key) => stored[key]);
 
             if (activeInGroup.length > 1) {
@@ -230,14 +224,6 @@ export default function settingsMenuModule(playerInstance) {
 
                 group.forEach((key) => {
                     stored[key] = key === keepKey;
-                });
-                return;
-            }
-
-            if (activeInGroup.length === 0) {
-                const defaultKey = group[0];
-                group.forEach((key) => {
-                    stored[key] = key === defaultKey;
                 });
             }
         });
@@ -262,13 +248,7 @@ export default function settingsMenuModule(playerInstance) {
             return;
         }
 
-        if (stored[sibling]) {
-            stored[id] = false;
-            return;
-        }
-
         stored[id] = false;
-        stored[sibling] = true;
     };
 
     const getExclusiveToggleSnapshot = (stored, group) => (
