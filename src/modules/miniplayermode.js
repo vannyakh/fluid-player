@@ -864,6 +864,7 @@ export default function miniPlayerModeModule(playerInstance) {
 
         if (options.enabled && !playerInstance.isInIframe) {
             miniPlayerButton.style.display = 'inline-block';
+            playerInstance.syncControlsBarLayout?.();
             playerInstance.trackEvent(
                 playerInstance.domRef.player.parentNode,
                 'click',
@@ -872,6 +873,7 @@ export default function miniPlayerModeModule(playerInstance) {
             );
         } else {
             miniPlayerButton.style.display = 'none';
+            playerInstance.syncControlsBarLayout?.();
         }
 
         playerInstance.syncPlayerMotionClass?.();

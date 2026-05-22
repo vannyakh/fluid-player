@@ -459,6 +459,7 @@ export default function theatreModeModule(playerInstance) {
 
         if (options.enabled && !playerInstance.isInIframe) {
             theatreButton.style.display = 'inline-block';
+            playerInstance.syncControlsBarLayout?.();
             playerInstance.trackEvent(
                 playerInstance.domRef.player.parentNode,
                 'click',
@@ -470,6 +471,7 @@ export default function theatreModeModule(playerInstance) {
             );
         } else {
             theatreButton.style.display = 'none';
+            playerInstance.syncControlsBarLayout?.();
         }
 
         syncTheatreButtonUI();

@@ -118,9 +118,13 @@
             overflow: hidden;
         }
 
-        /* Allow ambient mode blur to extend outside the player frame */
-        .player-stage.fp-ambient-test-stage {
-            overflow: visible;
+        /* Ambient test: visible glow outside player frame */
+        .player-stage.fp-ambient-test-stage.fp_ambient_stage_bleed {
+            background: #0a0a0a;
+        }
+
+        .player-stage.fp-ambient-test-stage.fp_ambient_stage_active #fluid_video_wrapper_fluid-player-e2e-case {
+            border-radius: var(--radius);
         }
 
         /* Theatre: full page width (see also fluid_theatre_* classes from player) */
@@ -531,7 +535,7 @@
     <div class="watch-layout" id="watch-layout" data-fluid-theatre-layout>
         <section class="watch-primary">
             <div class="player-stage fp-ambient-test-stage" id="player-stage" data-fluid-theatre-stage>
-                <video id="fluid-player-e2e-case">
+                <video id="fluid-player-e2e-case" crossorigin="anonymous">
                     <source src="https://cdn.fluidplayer.com/videos/valerian-1080p.mkv" data-fluid-hd title="1080p" type="video/mp4"/>
                     <source src="https://cdn.fluidplayer.com/videos/valerian-720p.mkv" data-fluid-hd title="720p" type="video/mp4"/>
                     <source src="https://cdn.fluidplayer.com/videos/valerian-480p.mkv" title="480p" type="video/mp4"/>
@@ -565,6 +569,7 @@
                     <button type="button" id="btn-close-settings">Close settings</button>
                     <button type="button" id="btn-toggle-theatre">Toggle theatre</button>
                     <button type="button" id="btn-toggle-mini-player">Toggle mini player</button>
+                    <button type="button" id="btn-toggle-ambient">Toggle ambient</button>
                 </div>
                 <ul class="feature-checklist">
                     <li><span aria-hidden="true">☐</span> <strong>Playback</strong> — play works with sound (no Web Audio until FX enabled)</li>
@@ -672,7 +677,7 @@
                     {
                         start: 15,
                         end: 45,
-                        imageUrl: 'static/annotation-badge.svg',
+                        imageUrl: 'static/logo.png',
                         linkUrl: 'https://www.fluidplayer.com/',
                         alt: 'Sponsor — bottom right',
                         position: 'bottomRight',
@@ -681,7 +686,7 @@
                     {
                         start: 90,
                         end: 120,
-                        imageUrl: 'static/annotation-badge.svg',
+                        imageUrl: 'static/logo.png',
                         alt: 'Sponsor — top left',
                         position: 'topLeft',
                         width: 120
@@ -697,6 +702,11 @@
                 sleepTimer: true,
                 playbackSpeed: true,
                 quality: true
+            },
+            ambient: {
+                mount: 'wrapper',
+                glowStrength: 'subtle',
+                clipToPlayer: true
             },
             persistentSettings: {
                 volume: true,
@@ -728,6 +738,10 @@
 
         return window.fluidPlayerDebug[window.fluidPlayerDebug.length - 1].internals;
     }
+
+    window.fpFeaturesE2e = {
+        getInternals: getPlayerInternals
+    };
 
     function readSettingsStore() {
         var internals = getPlayerInternals();
@@ -764,6 +778,9 @@
         var stage = document.getElementById('player-stage');
         var video = document.getElementById('fluid-player-e2e-case');
         var ambientOn = wrapper && wrapper.classList.contains('fp_ambient_active');
+        var ambientStatus = internals && typeof internals.getAmbientModeStatus === 'function'
+            ? internals.getAmbientModeStatus()
+            : null;
         var theatreOn = wrapper && wrapper.classList.contains('fluid_theatre_mode');
         var stageTheatre = stage && stage.classList.contains('watch-theatre-active');
         var annotationVisible = wrapper && wrapper.querySelector('.fluid_annotation_item.fp_annotation_active');
@@ -789,6 +806,10 @@
             miniOn = true;
         }
 
+        if (stage) {
+            stage.classList.toggle('fp_ambient_stage_active', !!ambientOn);
+        }
+
         panel.innerHTML =
             '<li><strong>Playing</strong> ' + (playing ? '<span class="on">yes</span>' : '<span class="off">no</span>') + '</li>' +
             '<li><strong>Theatre</strong> ' + (theatreOn || stageTheatre || theatreState.enabled
@@ -799,7 +820,14 @@
             '<li><strong>Audio FX menu</strong> ' + (audioSupported === null
                 ? '<span class="off">—</span>'
                 : (audioSupported ? '<span class="on">available</span>' : '<span class="off">hidden (CORS)</span>')) + '</li>' +
-            '<li><strong>Ambient</strong> ' + (ambientOn ? '<span class="on">active</span>' : formatBool(settings.ambientMode)) + '</li>' +
+            '<li><strong>Ambient</strong> ' + (ambientOn ? '<span class="on">active</span>' : formatBool(settings.ambientMode)) +
+            (ambientStatus
+                ? (ambientStatus.corsBlocked
+                    ? ' <span class="off">CORS blocked</span>'
+                    : (ambientStatus.canSample
+                        ? ' <span class="on">sampling</span>'
+                        : ' <span class="off">waiting for video</span>'))
+                : '') + '</li>' +
             '<li><strong>Stable vol.</strong> ' + formatBool(settings.stableVolume) + '</li>' +
             '<li><strong>Voice boost</strong> ' + formatBool(settings.voiceBoost) + '</li>' +
             '<li><strong>Annotations</strong> ' + formatBool(settings.annotations) +
@@ -857,6 +885,18 @@
         }
     }
 
+    function toggleAmbientForTest() {
+        var internals = getPlayerInternals();
+        var settings = readSettingsStore();
+        var next = !settings.ambientMode;
+
+        if (internals && typeof internals.setAmbientMode === 'function') {
+            internals.setAmbientMode(next);
+            renderFeatureStatus();
+            return;
+        }
+    }
+
     function toggleTheatreForTest() {
         var internals = getPlayerInternals();
 
@@ -875,6 +915,7 @@
     document.getElementById('btn-close-settings').addEventListener('click', closeSettingsMenuForTest);
     document.getElementById('btn-toggle-theatre').addEventListener('click', toggleTheatreForTest);
     document.getElementById('btn-toggle-mini-player').addEventListener('click', toggleMiniPlayerForTest);
+    document.getElementById('btn-toggle-ambient').addEventListener('click', toggleAmbientForTest);
 
     var videoEl = document.getElementById('fluid-player-e2e-case');
     if (videoEl) {

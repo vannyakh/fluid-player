@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Features E2E</title>
+    <%= htmlWebpackPlugin.tags.headTags %>
+    <style>
+        body {
+            margin: 0;
+            font-family: system-ui, sans-serif;
+            background: #0b0c10;
+            color: #f0f1f5;
+        }
+
+        .watch-page {
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+
+        .watch-layout {
+            display: grid;
+            grid-template-columns: 1fr 280px;
+            gap: 1rem;
+        }
+
+        .player-stage {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        #fluid-player-e2e-case {
+            width: 100%;
+        }
+
+        .watch-sidebar {
+            padding: 0.5rem;
+            background: #14151c;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="watch-page" id="watch-page" data-fluid-theatre-page>
+    <div class="watch-layout" id="watch-layout" data-fluid-theatre-layout>
+        <div class="player-stage" id="player-stage" data-fluid-theatre-parent>
+            <video id="fluid-player-e2e-case" crossorigin="anonymous">
+                <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4" data-fluid-hd title="1080p" type="video/mp4"/>
+                <source src="http://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4" title="720p" type="video/mp4"/>
+            </video>
+        </div>
+        <aside class="watch-sidebar" id="watch-sidebar" data-fluid-theatre-sidebar>
+            <p>Sidebar (hidden in theatre mode)</p>
+        </aside>
+    </div>
+</div>
+
+<%= htmlWebpackPlugin.tags.bodyTags %>
+
+<script>
+    fluidPlayer('fluid-player-e2e-case', {
+        layoutControls: {
+            playbackRateEnabled: true,
+            allowTheatre: true,
+            controlBar: {
+                autoHide: true,
+                autoHideTimeout: 1,
+                animated: true
+            },
+            theatreMode: {
+                enabled: true,
+                expandPage: true,
+                motion: true,
+                parentElement: 'player-stage',
+                pageElement: 'watch-page',
+                layoutElement: 'watch-layout',
+                sidebarElement: 'watch-sidebar'
+            },
+            annotations: {
+                items: [
+                    {
+                        start: 8,
+                        end: 14,
+                        imageUrl: 'static/annotation-badge.svg',
+                        alt: 'E2E sponsor',
+                        position: 'bottomRight',
+                        width: 120
+                    }
+                ]
+            },
+            settingsMenu: {
+                enabled: true,
+                stableVolume: true,
+                voiceBoost: true,
+                ambientMode: true,
+                annotations: true,
+                sleepTimer: true,
+                playbackSpeed: true,
+                quality: true
+            },
+            ambient: {
+                glowStrength: 'subtle',
+                clipToPlayer: true
+            },
+            persistentSettings: {
+                theatre: false,
+                settingsMenu: true,
+                speed: false,
+                quality: false,
+                volume: false
+            },
+            miniPlayer: {
+                enabled: true,
+                draggable: true,
+                floatToBody: true,
+                motion: true,
+                dragSnap: true,
+                snapMargin: 12,
+                position: 'bottom right'
+            }
+        }
+    });
+
+    window.fpFeaturesE2e = {
+        getInternals: function () {
+            if (!window.fluidPlayerDebug || !window.fluidPlayerDebug.length) {
+                return null;
+            }
+
+            return window.fluidPlayerDebug[window.fluidPlayerDebug.length - 1].internals;
+        }
+    };
+</script>
+
+</body>
+</html>

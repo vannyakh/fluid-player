@@ -166,6 +166,33 @@ declare interface LayoutControls {
         playbackSpeed: boolean;
         quality: boolean;
     }>;
+    ambient?: Partial<{
+        mount: 'wrapper' | 'stage';
+        /** subtle | normal | strong — preset for padding, blur, brightness */
+        glowStrength: 'subtle' | 'normal' | 'strong';
+        /** true = glow clipped to player box (thin rim). false = can extend outside player */
+        clipToPlayer: boolean;
+        /** Extra pixels around the video rect for the glow layer */
+        bleedPadding: number;
+        /** CSS blur on the glow layer (px) */
+        bleedBlur: number;
+        glowBrightness: number;
+        glowSaturation: number;
+        glowOpacity: number;
+        canvasOpacity: number;
+        frameIntervalMs: number;
+        sampleWidth: number;
+        canvasSize: number;
+        canvasBlur: number;
+        canvasBrightness: number;
+        canvasSaturate: number;
+        scaleLandscapeX: number;
+        scaleLandscapeY: number;
+        scalePortraitX: number;
+        scalePortraitY: number;
+        scaleSquare: number;
+        useVideoFrameCallback: boolean;
+    }>;
     miniPlayer: Partial<{
         enabled: boolean;
         width: number;

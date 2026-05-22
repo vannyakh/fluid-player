@@ -14,7 +14,9 @@
     "start": "npm run dev-server-debug",
     "e2e-ui": "npx playwright test --ui",
     "e2e-report": "npx playwright show-report",
-    "e2e": "npx playwright test"
+    "e2e": "npx playwright test",
+    "e2e:features": "npx playwright test e2e/features.spec.ts",
+    "e2e:ambient": "npx playwright test e2e/ambient.spec.ts"
   },
   "repository": {
     "type": "git",

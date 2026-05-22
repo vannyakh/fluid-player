@@ -87,6 +87,7 @@ export default function (playerInstance, options) {
         playerInstance.subtitlesTracks = tracks;
         const subtitlesChangeButton = playerInstance.domRef.wrapper.querySelector('.fluid_control_subtitles');
         subtitlesChangeButton.style.display = 'inline-block';
+        playerInstance.syncControlsBarLayout?.();
         let appendSubtitleChange = false;
 
         const subtitlesChangeList = document.createElement('div');

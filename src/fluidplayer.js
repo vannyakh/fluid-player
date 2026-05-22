@@ -298,6 +298,11 @@ const fluidPlayerClass = function () {
                     sleepTimer: true,
                     playbackSpeed: true,
                     quality: true,
+                },
+                ambient: {
+                    mount: 'wrapper',
+                    frameIntervalMs: 100,
+                    useVideoFrameCallback: true,
                 }
             },
             suggestedVideos: {
@@ -420,8 +425,11 @@ const fluidPlayerClass = function () {
             playerNode.addEventListener('loadedmetadata', self.mainVideoReady);
         }
 
-        if (self.displayOptions.layoutControls.showCardBoardView) {
-            // Required for cardboard view on cross-origin media
+        if (
+            self.displayOptions.layoutControls.showCardBoardView
+            || self.displayOptions.layoutControls.settingsMenu?.ambientMode !== false
+        ) {
+            // Required for canvas ambient sampling and cardboard on cross-origin media
             playerNode.crossOrigin = 'anonymous';
         }
 
@@ -902,7 +910,7 @@ const fluidPlayerClass = function () {
 
         // Left container
         controls.leftContainer = document.createElement('div');
-        controls.leftContainer.className = 'fluid_controls_left';
+        controls.leftContainer.className = 'fluid_controls_left fluid_control_pill_group';
         controls.root.appendChild(controls.leftContainer);
 
         // Left container -> Play/Pause
@@ -959,7 +967,7 @@ const fluidPlayerClass = function () {
 
         // Volume group (mute button + slider)
         controls.volumeGroup = document.createElement('div');
-        controls.volumeGroup.className = 'fluid_volume_group';
+        controls.volumeGroup.className = 'fluid_volume_group fluid_control_pill_group';
 
         controls.mute = document.createElement('div');
         controls.mute.className = 'fluid_button fluid_button_volume fluid_control_mute';
@@ -983,7 +991,7 @@ const fluidPlayerClass = function () {
         controls.volumeCurrent.appendChild(controls.volumeCurrentPos);
 
         const durationContainer = document.createElement('div');
-        durationContainer.className = 'fluid_control_duration';
+        durationContainer.className = 'fluid_control_duration fluid_control_pill_group';
 
         controls.duration = document.createElement('div');
         controls.duration.className = 'fluid_fluid_control_duration';
@@ -999,6 +1007,12 @@ const fluidPlayerClass = function () {
 
         controls.toolbarSpacer = document.createElement('div');
         controls.toolbarSpacer.className = 'fluid_controls_toolbar_spacer';
+
+        controls.metaGroup = document.createElement('div');
+        controls.metaGroup.className = 'fluid_controls_meta_group';
+
+        controls.toolbarGroup = document.createElement('div');
+        controls.toolbarGroup.className = 'fluid_controls_toolbar_group fluid_control_pill_group';
 
         controls.fullscreen = document.createElement('div');
         controls.fullscreen.className = 'fluid_button fluid_control_fullscreen fluid_button_fullscreen';
@@ -1030,21 +1044,23 @@ const fluidPlayerClass = function () {
         controls.download = document.createElement('div');
         controls.download.className = 'fluid_button fluid_control_download fluid_button_download';
 
-        controls.rightContainer.appendChild(controls.volumeGroup);
-        controls.rightContainer.appendChild(durationContainer);
+        controls.metaGroup.appendChild(controls.volumeGroup);
+        controls.metaGroup.appendChild(durationContainer);
+        controls.rightContainer.appendChild(controls.metaGroup);
         controls.rightContainer.appendChild(controls.toolbarSpacer);
 
         if (options.miniPlayer.enabled) {
-            controls.rightContainer.appendChild(controls.miniPlayer);
+            controls.toolbarGroup.appendChild(controls.miniPlayer);
         }
 
-        controls.rightContainer.appendChild(controls.theatre);
-        controls.rightContainer.appendChild(controls.cardboard);
-        controls.rightContainer.appendChild(controls.playbackRate);
-        controls.rightContainer.appendChild(controls.download);
-        controls.rightContainer.appendChild(controls.videoSource);
-        controls.rightContainer.appendChild(controls.subtitles);
-        controls.rightContainer.appendChild(controls.fullscreen);
+        controls.toolbarGroup.appendChild(controls.theatre);
+        controls.toolbarGroup.appendChild(controls.cardboard);
+        controls.toolbarGroup.appendChild(controls.playbackRate);
+        controls.toolbarGroup.appendChild(controls.download);
+        controls.toolbarGroup.appendChild(controls.videoSource);
+        controls.toolbarGroup.appendChild(controls.subtitles);
+        controls.toolbarGroup.appendChild(controls.fullscreen);
+        controls.rightContainer.appendChild(controls.toolbarGroup);
 
         self.attachToolbarControlTooltip(controls.fullscreen, 'Full screen', 'F');
         self.attachToolbarControlTooltip(controls.subtitles, self.displayOptions.captions.subtitles);
@@ -1060,6 +1076,33 @@ const fluidPlayerClass = function () {
         self.attachToolbarControlTooltip(controls.download, 'Download');
 
         return controls;
+    };
+
+    self.syncToolbarPillLayout = () => {
+        const group = self.domRef.wrapper?.querySelector('.fluid_controls_toolbar_group');
+
+        if (!group) {
+            return;
+        }
+
+        const visibleCount = Array.from(group.children).filter((node) => {
+            return window.getComputedStyle(node).display !== 'none';
+        }).length;
+
+        self.domRef.wrapper.style.setProperty(
+            '--fp-toolbar-pill-slots',
+            String(Math.max(visibleCount, 1)),
+        );
+    };
+
+    self.syncControlsBarLayout = () => {
+        const hasSkipControls = !!self.domRef.wrapper?.querySelector('.fluid_controls_container.skip_controls');
+
+        self.domRef.wrapper.style.setProperty(
+            '--fp-controls-left-slots',
+            hasSkipControls ? '3' : '1',
+        );
+        self.syncToolbarPillLayout?.();
     };
 
     self.showLiveIndicator = () => {
@@ -2263,6 +2306,10 @@ const fluidPlayerClass = function () {
         self.initAudioModes?.();
 
         self.initSettingsMenu?.();
+
+        requestAnimationFrame(() => {
+            self.syncControlsBarLayout?.();
+        });
 
         self.initAnnotations?.();
 
